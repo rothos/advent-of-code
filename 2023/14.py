@@ -3,6 +3,10 @@ from collections import Counter, defaultdict
 from itertools import permutations, combinations
 import re
 
+import time
+time0 = time.time()
+
+
 file = "input14.txt"
 # file = "test14.txt"
 
@@ -64,8 +68,10 @@ t = 0
 rolled = roll(lines)
 for i,line in enumerate(rolled):
     t += (len(rolled)-i)*sum(c=="O" for c in line)
-print(t)
 
+ans = t
+time1 = time.time()
+print(ans, " ", "%.3f seconds" % (time1 - time0))
 
 
 ### PART 2
@@ -87,4 +93,6 @@ for c in range(h+1,mod+1):
     for direction in range(4):
         lines = roll(lines, direction)
 
-print(load(lines))
+ans = load(lines)
+time2 = time.time()
+print(ans, " ", "%.3f seconds" % (time2 - time1))
