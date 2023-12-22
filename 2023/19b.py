@@ -22,7 +22,7 @@ def parseworkflow(s):
 # and the string "rfg" into the string "rfg"
 def parserule(s):
     if len(s.split(":")) == 1:
-        return AR_to_bool(s)
+        return s
 
     cond,res = s.split(":")
 
@@ -33,23 +33,33 @@ def parserule(s):
         param, num = cond.split(">")
         interval = (int(num)+1,4001)
 
-    return (param, interval, AR_to_bool(res))
+    return (param, interval, res)
 
-def AR_to_bool(s):
-    if s == "A": s = True
-    if s == "R": s = False
-    return s
+def get_overlap(ruleinterval, myinterval):
+    a, b = max(ruleinterval[0],myinterval[0]), min(ruleinterval[1],myinterval[1])
+    overlap = (a,b) if a<b else None
+    if overlap == None:
+        rest = myinterval
+    elif overlap == myinterval:
+        rest = None
+    else:
+        if overlap[0] == myinterval[0]:
+            rest = (overlap[1], myinterval[1])
+        else:
+            rest = (myinterval[0], overlap[0])
+    
+    return overlap, rest
 
 def recurse(name, params):
-    if name == False:
+    if name == "R":
         return 0
-    if name == True:
+    if name == "A":
         return prod([(x[1]-x[0]) for x in params.values()])
 
     rules = workflows[name]
     ans = 0
     for rule in rules:
-        if type(rule) in [str,bool]:
+        if type(rule) == str:
             ans += recurse(rule, copy(params))
         else:
             xmas,ruleinterval,outname = rule
@@ -61,21 +71,6 @@ def recurse(name, params):
                 params[xmas] = rest
 
     return ans
-
-def get_overlap(ruleinterval, myinterval):
-    a, b = max(ruleinterval[0],myinterval[0]), min(ruleinterval[1],myinterval[1])
-    overlapped = (a,b) if a<b else None
-    if overlapped == None:
-        rest = myinterval
-    elif overlapped == myinterval:
-        rest = None
-    else:
-        if overlapped[0] == myinterval[0]:
-            rest = (overlapped[1], myinterval[1])
-        else:
-            rest = (myinterval[0], overlapped[0])
-    
-    return overlapped, rest
 
 
 file = "input19.txt"
