@@ -106,7 +106,7 @@ def f(x):
 
 x0 = np.array([random.random() for i in range(9)])
 
-# Do 200 steps of Newton's method
+# Iterate with Newton's method
 for step in range(50):
     x0 += np.linalg.solve(J(x0), -f(x0))
 
