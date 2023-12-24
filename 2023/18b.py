@@ -13,10 +13,45 @@ file = "test18.txt"
 with open(file, 'r') as f:
     content = f.read()
     lines = content.split("\n")
-    lines = [l.split() for l in lines]
-    lines = [(l[0], int(l[1]), l[2][2:-1]) for l in lines]
+    lines = [l.split("#")[1][:-1] for l in lines]
+    dirs = [(int(l[-1]), int(l[:-1],16)) for l in lines]
 
-mm = {"U":(0,1), "D":(0,-1), "L":(-1,0), "R":(1,0)}
+# mm = {"U":(0,1), "D":(0,-1), "L":(-1,0), "R":(1,0)}
+mm = {3:(0,1), 1:(0,-1), 2:(-1,0), 0:(1,0)}
+
+pos = (0,0)
+pts = [pos]
+for d,l in dirs:
+    if d == 0: pos = (pos[0]+l, pos[1])
+    if d == 1: pos = (pos[0], pos[1]+l)
+    if d == 2: pos = (pos[0]-l, pos[1])
+    if d == 3: pos = (pos[0], pos[1]-l)
+    pts += [pos]
+
+xx = sorted(list(set(p[0] for p in pts)))
+yy = sorted(list(set(p[1] for p in pts)))
+
+pos = (0,0)
+compressedpts = [pos]
+for d,l in dirs:
+    if d == 0: pos = (pos[0]+l, pos[1])
+    if d == 1: pos = (pos[0], pos[1]+l)
+    if d == 2: pos = (pos[0]-l, pos[1])
+    if d == 3: pos = (pos[0], pos[1]-l)
+    x,y = xx.index(pos[0]), yy.index(pos[1])
+    compressedpts += [(x,y)]
+
+print(pts)
+print(compressedpts)
+exit()
+
+
+
+
+
+
+
+
 
 def addpts(a,b,repeat=1):
     return (a[0]+repeat*b[0], a[1]+repeat*b[1])
