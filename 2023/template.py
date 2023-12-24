@@ -16,4 +16,11 @@ with open(file, 'r') as f:
 
 
 time1 = time.time()
-print("%.3fms" % (time1-time0))
+print("%.3fs" % (time1-time0))
+
+
+
+
+
+time2 = time.time()
+print("%.3fs" % (time2-time0))
