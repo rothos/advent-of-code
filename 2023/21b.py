@@ -1,52 +1,84 @@
 file = "input21.txt"
-file = "input21-lawrence.txt"
+# file = "input21-lawrence.txt"
 # file = "test21.txt"
+
+from math import floor, ceil
 
 with open(file, 'r') as f:
     content = f.read()
     grid = [list(l) for l in content.split("\n")]
 
-def step(grid, oo):
-    oo2 = set()
-    for a,b in oo:
-        for i,j in [(0,1),(0,-1),(1,0),(-1,0)]:
-            x = a + i
-            y = b + j
-            xmod = x % len(grid)
-            ymod = y % len(grid[0])
-            if grid[xmod][ymod] in ".S":
-                oo2.add((x,y))
-    return oo2
-
-oo = set()
-
+i_odd = 0
+i_even = 0
+o_odd = 0
+o_even = 0
 for i in range(len(grid)):
     for j in range(len(grid[0])):
-        if grid[i][j] == "S":
-            oo.add((i,j))
-            break
+        if grid[i][j] == '#':
+            if abs(i-65)+abs(j-65) < 64:
+                # inner
+                if (i+j) % 2 == 0:
+                    i_even += 1
+                else:
+                    i_odd += 1
+            else:
+                # outer
+                if (i+j) % 2 == 0:
+                    o_even += 1
+                else:
+                    o_odd += 1
 
-for n in range(1,5001):
-    oo = step(grid, oo)
-    if n % 10 == 0: print(n)
-    if n in [64,65,66,131,65+131,65+131+1,65+131*2,65+131*4]:
-        print(n, ":", len(oo))
+done = False
+for a in range(5):
+    for b in range(5):
+        for c in range(5):
+            i_odd2 = i_odd + a
+            i_even2 = i_even + b
+            o_odd2 = o_odd + c
+
+            N = 26501365
+            N = 65 + 131*4
+
+            total = (N+1)**2
+
+            megasteps = (N - 65) // 131
+            megatiles = (megasteps*2 + 1)**2
+
+            splits = floor(megatiles/2)
+            wholes = ceil(megatiles/2)
+
+            odds = (megasteps + 1)**2
+            evens = megasteps**2
+
+            rocks = odds*i_odd2 + evens*i_even2 + splits*(o_odd2+o_even)/2
+
+            ans = total - rocks
+
+            if ans == 305437:
+                done = True
+                break
+        if done: break
+    if done: break
 
 
-# HROTHGAR
-# 64 : 3716
-# 65 : 3797
-# 131 : 15272
-# 196 : 34009
-# 327 : 94353
-# 589 : 305437
+i_odd  += a
+i_even += b
+o_odd  += c
 
+N = 26501365
 
-# LAWRENCE
-# 64 : 3748
-# 65 : 3787
-# 66 : 4012
-# 131 : 15291
-# 196 : 33976
-# 327 : 94315
-# 589 : 305443
+total = (N+1)**2
+
+megasteps = (N - 65) // 131
+megatiles = (megasteps*2 + 1)**2
+
+splits = floor(megatiles/2)
+wholes = ceil(megatiles/2)
+
+odds = (megasteps + 1)**2
+evens = megasteps**2
+
+rocks = odds*i_odd + evens*i_even + splits*(o_odd+o_even)/2
+
+ans = total - rocks
+print(int(ans))
