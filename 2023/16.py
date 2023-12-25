@@ -9,7 +9,7 @@ time0 = time.time()
 
 
 file = "input16.txt"
-file = "test16.txt"
+# file = "test16.txt"
 
 ### PART 1
 
@@ -22,7 +22,7 @@ energized_things = set()
 energized = set()
 
 def in_bounds(coord):
-    return coord[0] >= 0 and coord[0] < len(grid) and coord[1] >= 0 and coord[1] <= len(grid[0])
+    return (0 <= coord[0] < len(grid)) and (0 <= coord[1] < len(grid[0]))
 
 def move(coord, direction):
     return (coord[0] + direction[0], coord[1] + direction[1])
@@ -35,10 +35,13 @@ def tile_at(coord):
 
 @cache
 def go(coord, direction):
+    if not in_bounds(coord):
+        return
+
     # Add this tile to energized set
     energized.add(coord)
 
-    print_grid()
+    # print_grid()
     
     # Look in the direction we're going until we hit either
     # a Thing or a wall:
@@ -61,7 +64,7 @@ def go(coord, direction):
     energized_things.add(coord)
     energized.add(coord)
 
-    print(len(energized))
+    # print(len(energized))
 
     if direction == (0,1) and tile == "-":
         go(move(coord,direction),direction)
@@ -115,25 +118,12 @@ def print_grid():
         print()
     print()
 
+
+# PART 1
+# 6740
 go((0,0), (0,1))
-
 print(len(energized))
-print()
-# print(energized)
-# print(energized_things)
 
-# for i in range(len(grid)):
-#     for j in range(len(grid[0])):
-#         if (i,j) in energized:
-#             print("#", end="")
-#         else:
-#             print(grid[i][j], end="")
-#     print()
-# print()
-# for i in range(len(grid)):
-#     for j in range(len(grid[0])):
-#         if (i,j) in energized_things:
-#             print("#", end="")
-#         else:
-#             print(grid[i][j], end="")
-#     print()
+
+time1 = time.time()
+print("%.3fs" % (time1-time0))
