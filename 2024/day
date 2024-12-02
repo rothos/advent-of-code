@@ -29,7 +29,11 @@ with open(file, 'r') as f:
 ### PART 1
 
 
+
+
 ### PART 2
+
+
 EOF
 fi
 files_to_open+=("$python_file")
