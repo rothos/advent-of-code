@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# Check if an argument is provided
+if [ $# -eq 0 ]; then
+    echo "Please provide a day number"
+    exit 1
+fi
+
+# Day number from first argument
+day=$1
+
+# Python script filename
+python_file="${day}.py"
+input_file="input${day}.txt"
+input_test_file="input${day}test.txt"
+
+# Files to open in Sublime
+files_to_open=()
+
+# Create Python script if it doesn't exist
+if [ ! -f "$python_file" ]; then
+    cat << EOF > "$python_file"
+file = "input${day}.txt"
+file = "input${day}test.txt"
+
+with open(file, 'r') as f:
+    lines = f.read()
+
+### PART 1
+
+
+### PART 2
+EOF
+fi
+files_to_open+=("$python_file")
+
+# Create input files if they don't exist
+[ ! -f "$input_file" ] && touch "$input_file"
+files_to_open+=("$input_file")
+
+[ ! -f "$input_test_file" ] && touch "$input_test_file"
+files_to_open+=("$input_test_file")
+
+# Open files in Sublime Text
+subl -n "${files_to_open[@]}"
