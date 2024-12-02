@@ -24,7 +24,7 @@ file = "input${day}.txt"
 file = "input${day}test.txt"
 
 with open(file, 'r') as f:
-    lines = f.read()
+    lines = f.read().splitlines()
 
 ### PART 1
 

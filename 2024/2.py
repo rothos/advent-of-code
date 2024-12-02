@@ -2,7 +2,7 @@ file = "input2.txt"
 # file = "input2test.txt"
 
 with open(file, 'r') as f:
-    lines = f.read()
+    lines = f.read().splitlines()
 
 
 ### PART 1
@@ -11,7 +11,7 @@ def safe(nn):
     dd = [nn[i] - nn[i+1] for i in range(len(nn)-1)]
     return all(d>0 and 0<abs(d)<4 for d in dd) or all(d<0 and 0<abs(d)<4 for d in dd)
 
-reps = [[int(n) for n in l.split()] for l in lines.split('\n')]
+reps = [[int(n) for n in l.split()] for l in lines]
 safes = [safe(r) for r in reps]
 print(sum(safes))
 
