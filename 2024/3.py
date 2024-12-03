@@ -5,7 +5,7 @@ text = open(file, 'r').read()
 import re
 
 def process(text):
-    matches = re.findall(r"mul\(([0-9]+),([0-9]+)\)", text)
+    matches = re.findall(r"mul\((\d+),(\d+)\)", text)
     return sum(int(x[0])*int(x[1]) for x in matches)
 
 ### PART 1
