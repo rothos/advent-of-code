@@ -20,10 +20,8 @@ files_to_open=()
 # Create Python script if it doesn't exist
 if [ ! -f "$python_file" ]; then
     cat << EOF > "$python_file"
-file = "input${day}.txt"
-file = "input${day}test.txt"
-
-lines = open(file, 'r').read().splitlines()
+lines = open("input${day}.txt", 'r').read().splitlines()
+lines = open("input${day}test.txt", 'r').read().splitlines()
 
 ### PART 1
 
@@ -31,7 +29,6 @@ lines = open(file, 'r').read().splitlines()
 
 
 ### PART 2
-
 
 EOF
 fi
