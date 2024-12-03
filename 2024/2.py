@@ -1,8 +1,7 @@
 file = "input2.txt"
 # file = "input2test.txt"
 
-with open(file, 'r') as f:
-    lines = f.read().splitlines()
+lines = open(file, 'r').read().splitlines()
 
 
 ### PART 1
