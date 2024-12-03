@@ -1,22 +1,17 @@
 file = "input3.txt"
 # file = "input3test.txt"
-
-lines = open(file, 'r').read().splitlines()
-
-### PART 1
+text = open(file, 'r').read()
 
 import re
-pattern = re.compile(r"mul\(([0-9]+),([0-9]+)\)")
-matches = re.findall(pattern, "".join(lines))
-total = sum([int(x[0])*int(x[1]) for x in matches])
-print(total)
+
+def process(text):
+    pattern = re.compile(r"mul\(([0-9]+),([0-9]+)\)")
+    matches = re.findall(pattern, text)
+    return sum([int(x[0])*int(x[1]) for x in matches])
+
+### PART 1
+print(process(text))
 
 ### PART 2
- 
-text = ""
-for t in ("do()" + "".join(lines)).split("don't()"):
-    text += "".join(t.split("do()")[1:])
-
-matches = re.findall(pattern, text)
-total = sum([int(x[0])*int(x[1]) for x in matches])
-print(total)
+dotext = "".join( "".join(t.split("do()")[1:]) for t in ("do()" + text).split("don't()") )
+print(process(dotext))
