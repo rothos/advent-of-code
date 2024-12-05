@@ -16,9 +16,6 @@ rules,updates = text.split("\n\n")
 rules = [r.split("|") for r in rules.split("\n")]
 updates = [u.split(",") for u in updates.split("\n")]
 
-# rules = [[int(r) for r in rule.split("|")] for rule in rules.split("\n")]
-# updates = [[int(u) for u in update.split(",")] for update in updates.split("\n")]
-
 total = 0
 for u in updates:
     if check_update(u, rules):
@@ -43,8 +40,8 @@ def fix_update(u,rules):
     if not borked:
         return False
 
-    # Uhh just do a bunch of passes i guess
-    for _ in range(4):
+    while borked:
+        borked = False
         for rule in rules:
             if rule[0] in u and rule[1] in u:
                 u1,u2 = ",".join(u).split(rule[0])
