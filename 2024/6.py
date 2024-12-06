@@ -1,6 +1,9 @@
 lines = open("input6.txt", 'r').read().splitlines()
 # lines = open("input6test.txt", 'r').read().splitlines()
 
+lines = [list(l) for l in lines]
+
+
 ### PART 1
 
 def rotate(direction):
@@ -12,7 +15,6 @@ def rotate(direction):
 
 visited = set()
 
-MAP = [list(l) for l in lines]
 gi = None
 for i,line in enumerate(lines):
     if "^" in line:
@@ -22,36 +24,21 @@ for i,line in enumerate(lines):
 
 i,j = gi,gj
 
-MAP[i][j] = '.'
 visited.add((i,j))
 
 direction = (-1,0)
 while 0 <= i+direction[0] < len(lines[0]) and 0 <= j+direction[1] < len(lines):
     i2, j2 = i+direction[0], j+direction[1]
-    if MAP[i2][j2] == "#":
+    if lines[i2][j2] == "#":
         direction = rotate(direction)
     else:
         i,j = i2,j2
         visited.add((i,j))
 
-    # M = MAP
-    # for x,line in enumerate(M):
-    #     for y,_ in enumerate(line):
-    #         if (x,y) in visited:
-    #             M[x][y] = "X"
-
-    # M = "\n".join(["".join(m) for m in MAP])
-    # print(M); print("")
-
 print(len(visited))
 
 
-
-
-
 ### PART 2
-
-import copy
 
 obstructions = set()
 for x,y in visited:
@@ -75,7 +62,7 @@ for ob in obstructions:
     while 0 <= i+direction[0] < len(lines[0]) and 0 <= j+direction[1] < len(lines):
         i2, j2 = i+direction[0], j+direction[1]
         
-        if MAP[i2][j2] == "#" or (i2,j2) == ob:
+        if lines[i2][j2] == "#" or (i2,j2) == ob:
             direction = rotate(direction)
         else:
             i,j = i2,j2
@@ -85,6 +72,5 @@ for ob in obstructions:
             break
 
         visited.add((i,j,direction))
-
 
 print(count)
