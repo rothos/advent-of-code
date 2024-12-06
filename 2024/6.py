@@ -1,5 +1,5 @@
 lines = open("input6.txt", 'r').read().splitlines()
-lines = open("input6test.txt", 'r').read().splitlines()
+# lines = open("input6test.txt", 'r').read().splitlines()
 
 lines = [list(l) for l in lines]
 
@@ -24,20 +24,24 @@ for i,line in enumerate(lines):
 
 # i,j are current guard coordinates
 i,j = gi,gj
+direction = (-1,0)
 visited = set()
 visited.add((i,j))
+visited_with_dirs = set()
+visited_with_dirs.add((i,j,direction))
 
 # Traverse the map
-direction = (-1,0)
 while 0 <= i+direction[0] < len(lines[0]) and 0 <= j+direction[1] < len(lines):
     i2, j2 = i+direction[0], j+direction[1]
     # Rotate if we've hit an obstruction
     if lines[i2][j2] == "#":
         direction = rotate(direction)
+        visited_with_dirs.add((i,j,direction))
     else:
         # Proceed forward
         i,j = i2,j2
         visited.add((i,j))
+        visited_with_dirs.add((i,j,direction))
 
 # The answer is how many cells the guard has visited
 print(len(visited))
@@ -45,18 +49,14 @@ print(len(visited))
 
 ### PART 2
 
-# All candidate obstructions must be adjacent to a cell that the
-# guard has already traversed.
+# All candidate obstructions must be to the "front" (directionwise)
+# of a cell that the guard has already traversed.
 obstructions = set()
-for x,y in visited:
-    obstructions.add((x,y))
-    if 0<=x+1<len(lines[0]): obstructions.add((x+1,y))
-    if 0<=x-1<len(lines[0]): obstructions.add((x-1,y))
-    if 0<=y+1<len(lines): obstructions.add((x,y+1))
-    if 0<=y-1<len(lines): obstructions.add((x,y-1))
-
-# We can't place an obstruction in the place the guard started
-obstructions.remove((gi,gj))
+for x,y,dd in visited_with_dirs:
+    # We can't place an obstruction in the place the guard started
+    x2,y2 = x+dd[0], y+dd[1]
+    if (x2,y2) != (gi,gj) and 0 <= x2 < len(lines[0]) and 0 <= y2 < len(lines):
+        obstructions.add((x2,y2))
 
 # We're counting how many new obstructions lead to cycles
 count = 0
