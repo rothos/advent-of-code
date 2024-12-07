@@ -7,6 +7,9 @@ def combine(s, nn, concat=False):
         if nn[0] == s:
             return True
         return False
+    
+    if nn[0] > s:
+        return False
 
     x = combine(s, [nn[0]*nn[1]]+nn[2:], concat=concat)
     y = combine(s, [nn[0]+nn[1]]+nn[2:], concat=concat)
