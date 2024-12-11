@@ -11,10 +11,10 @@ def iterate(n, iters):
     if n == 0:
         return iterate(1, iters-1)
     if math.floor(math.log(n, 10)) % 2:
-        b = math.floor(math.log(n, 10))
+        d = 10 ** ((math.floor(math.log(n, 10)) + 1) / 2)
         return (
-                iterate(n // 10**(b//2+1), iters-1)
-              + iterate(n % 10**(b//2+1), iters-1)
+                iterate(n // d, iters-1)
+              + iterate(n % d, iters-1)
             )
     else:
         return iterate(n*2024, iters-1)
