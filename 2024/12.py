@@ -44,12 +44,20 @@ def fill_region(grid, pt):
     return area, boundary, region
 
 def count_sides(region):
-    area = np.zeros(grid.shape)
-    area[*zip(*list(region))] = 1
+    min_i = min(x[0] for x in region)
+    min_j = min(x[1] for x in region)
+    region = [(x[0]-min_i, x[1]-min_j) for x in region]
+    max_i = max(x[0] for x in region) + 1
+    max_j = max(x[1] for x in region) + 1
+
+    area = np.zeros((max_i, max_j))
+    area[*zip(*region)] = 1
+    area = np.pad(area, 1, constant_values=0)
+
     sides = 0
     for _ in range(4):
-        for i in range(1, h):
-            row = [area[i,j] and not area[i-1,j] for j in range(w)] + [0]
+        for i in range(1, area.shape[0]):
+            row = [area[i,j] and not area[i-1,j] for j in range(area.shape[1])] + [0]
             sides += sum(np.diff(row) < 0)
 
         area = np.rot90(area)
