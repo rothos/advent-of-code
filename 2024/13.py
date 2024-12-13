@@ -14,11 +14,11 @@ def parse_machine(machine_text):
     return matrix, np.array(prize_xy, dtype=float)
 
 def solve_machine(machine, const=0):
-    eps = 10e-4
     matrix, prize_xy = machine
     prize_xy += const
     a,b = np.linalg.solve(matrix, prize_xy)
-    if abs(a-round(a)) > eps or abs(b-round(b)) > eps:
+    a,b = round(a), round(b)
+    if not all(matrix @ [a,b] == prize_xy):
         return 0
     return 3*a + b
 
