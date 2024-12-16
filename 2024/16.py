@@ -21,7 +21,7 @@ def all_shortest_paths(start, is_end, neighbors_function):
     seen = {}
     queue = [(0, (start, [start]))]
     best_cost = float('inf')
-    all_optimal_paths = []
+    shortest_paths = []
 
     while queue:
         cost, (node, path) = heapq.heappop(queue)
@@ -32,25 +32,19 @@ def all_shortest_paths(start, is_end, neighbors_function):
             seen[node] = cost
             
             if is_end(node):
-                if not all_optimal_paths or cost <= best_cost:
+                if not shortest_paths or cost <= best_cost:
                     if cost < best_cost:
-                        all_optimal_paths = []
+                        shortest_paths = []
                         best_cost = cost
 
-                    all_optimal_paths.append(path)
+                    shortest_paths.append(path)
             
             for neighbor, thiscost in neighbors_function(node):
                 new_cost = cost + thiscost
                 if new_cost <= best_cost:
                     heapq.heappush(queue, (new_cost, (neighbor, path + [neighbor])))
     
-    return all_optimal_paths, best_cost
-
-def xy_only(nodes):
-    xyset = set()
-    for node in nodes:
-        xyset.add(node[0])
-    return xyset
+    return shortest_paths, best_cost
 
 def is_end(end_xy):
     return lambda node: node[0] == end_xy
