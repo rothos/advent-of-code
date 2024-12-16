@@ -1,5 +1,5 @@
 text = open("input16.txt", 'r').read()
-text = open("input16test2.txt", 'r').read()
+# text = open("input16test2.txt", 'r').read()
 # text = open("input16test.txt", 'r').read()
 
 import numpy as np
