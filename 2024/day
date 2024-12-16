@@ -20,16 +20,25 @@ files_to_open=()
 # Create Python script if it doesn't exist
 if [ ! -f "$python_file" ]; then
     cat << EOF > "$python_file"
-lines = open("input${day}.txt", 'r').read().splitlines()
-lines = open("input${day}test.txt", 'r').read().splitlines()
+text = open("input${day}.txt", 'r').read()
+text = open("input${day}test.txt", 'r').read()
 
-### PART 1
+def do_part(part):
+
+    if part == 1:
+        pass
+
+    else:
+        pass
 
 
-
-
-### PART 2
-
+import time
+start = time.perf_counter()
+print(do_part(1))
+print(f"Execution time: {time.perf_counter() - start:.4f} seconds")
+start = time.perf_counter()
+print(do_part(2))
+print(f"Execution time: {time.perf_counter() - start:.4f} seconds")
 EOF
 fi
 files_to_open+=("$python_file")
