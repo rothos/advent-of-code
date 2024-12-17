@@ -57,16 +57,6 @@ class Computer():
         return outs
 
     def get_quine(self, i=None, n=0):
-        # 2,4: b = a & 7
-        # 1,1: b ^= 1
-        # 7,5: c = a >> b
-        # 1,5: b ^= 5
-        # 4,0: b ^= c
-        # 5,5: output b & 7
-        # 0,3: a = a >> 3
-        # 3,0: if a: i = 0
-        f = lambda a: ((((a & 7) ^ 1) ^ 5) ^ (a >> ((a & 7) ^ 1))) & 7
-
         if i is None:
             i = len(self.program) - 1
 
@@ -81,12 +71,7 @@ class Computer():
         return None
 
 def do_part(part):
-    # com = Computer([117440,0,0],[0,3,5,4,3,0])
-    # out = com.run(2)
-    # print(out)
-    # exit()
-
-    abc,program = parse_input(text)
+    abc, program = parse_input(text)
     com = Computer(abc, program)
 
     if part == 1:
@@ -103,8 +88,3 @@ print(f"Execution time: {time.perf_counter() - start:.4f} seconds")
 start = time.perf_counter()
 print(do_part(2))
 print(f"Execution time: {time.perf_counter() - start:.4f} seconds")
-
-# too high: 671911567995793023
-# too low:  320857470393
-# too low:  164279024971426
-#           164279024971453
