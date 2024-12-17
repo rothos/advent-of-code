@@ -40,14 +40,45 @@ class Computer():
         if n == 7: self.c = self.a // (2**cop)
         return None
 
-    def run(self, part):
+    def run(self, a=None):
+        if a is not None:
+            self.a = a
+            self.b = 0
+            self.c = 0
+            self.i = 0
+
         returned = None
         outs = []
-        while self.i < len(self.program) and (part != 2 or outs == self.program[:len(outs)]):
+        while self.i < len(self.program):
             returned = self.instruct(self.program[self.i], self.program[self.i+1])
             if returned != None:
                 outs.append(returned)
+
         return outs
+
+    def get_quine(self, i=None, n=0):
+        # 2,4: b = a & 7
+        # 1,1: b ^= 1
+        # 7,5: c = a >> b
+        # 1,5: b ^= 5
+        # 4,0: b ^= c
+        # 5,5: output b & 7
+        # 0,3: a = a >> 3
+        # 3,0: if a: i = 0
+        f = lambda a: ((((a & 7) ^ 1) ^ 5) ^ (a >> ((a & 7) ^ 1))) & 7
+
+        if i is None:
+            i = len(self.program) - 1
+
+        for k in range(8):
+            if self.run(a=n*8 + k) == self.program[i:]:
+                if i == 0:
+                    return n*8 + k
+                new = self.get_quine(i=i-1, n=n*8+k)
+                if new is not None:
+                    return new
+
+        return None
 
 def do_part(part):
     # com = Computer([117440,0,0],[0,3,5,4,3,0])
@@ -59,24 +90,11 @@ def do_part(part):
     com = Computer(abc, program)
 
     if part == 1:
-        outs = com.run(part)
+        outs = com.run()
         return ",".join([str(i) for i in outs])
 
     else:
-        a = 0
-        outs = []
-        while outs != program:
-            com.a = a
-            outs = com.run(part)
-            # if a % 10000000 == 0:
-            #     print(a)
-            # if outs:
-            #     print(outs)
-            #     input("press enter")
-            a += 1
-
-        return com.a
-
+        return com.get_quine()
 
 import time
 start = time.perf_counter()
@@ -85,3 +103,8 @@ print(f"Execution time: {time.perf_counter() - start:.4f} seconds")
 start = time.perf_counter()
 print(do_part(2))
 print(f"Execution time: {time.perf_counter() - start:.4f} seconds")
+
+# too high: 671911567995793023
+# too low:  320857470393
+# too low:  164279024971426
+#           164279024971453
