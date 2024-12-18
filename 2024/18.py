@@ -33,7 +33,7 @@ def do_part(part):
     byts = [(int(l.split(",")[0]), int(l.split(",")[1])) for l in text.splitlines()]
     grid = np.ones([W,W])
     for pt in byts[:N]:
-        grid[pt[::-1]] = 0
+        grid[pt] = 0
 
     x0,y0 = 0,0
     x1,y1 = W,W
@@ -43,8 +43,11 @@ def do_part(part):
         return len(path)-1
 
     else:
+        path = None
         for pt in byts[N:]:
-            grid[pt[::-1]] = 0
+            grid[pt] = 0
+            if path and pt not in path:
+                continue
             try:
                 path,cost = shortest_path(grid, (0,0), is_end_fn, get_neighbors_fn)
             except:
