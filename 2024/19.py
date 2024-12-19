@@ -12,7 +12,6 @@ def same_up_to_len(a,b):
 def can_make(desired, available, cur=""):
     if cur == desired:
         return 1
-
     elif len(cur) > len(desired):
         return 0
 
@@ -24,21 +23,16 @@ def can_make(desired, available, cur=""):
     return total
 
 def do_part(part):
-
     available,desired = text.split("\n\n")
     available = tuple(available.split(", "))
     desired = tuple(desired.split("\n"))
-
     results = [can_make(d,available) for d in desired]
 
     if part == 1:
-        
         return sum(1 for x in results if x)
 
     else:
-        
         return sum(results)
-
 
 
 import time
