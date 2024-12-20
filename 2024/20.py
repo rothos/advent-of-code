@@ -6,8 +6,6 @@ import heapq
 import collections
 from functools import cache
 
-grid = np.array([list(l) for l in text.split('\n')])
-
 def shortest_path(grid, start, end, get_neighbors_fn):
     seen = set()
     queue = [(0, (start, [start]))]
@@ -37,18 +35,24 @@ def add(a,b):
 def negate(v):
     return (-v[0], -v[1])
 
-def in_bounds(pt):
-    W,_ = grid.shape
+def in_bounds(W, pt):
     x,y = pt
     return 0 <= x < W and 0 <= y < W
 
-def get_path_tiles_within_N_steps(start, pathtiles):
-    pass
+def get_path_tiles_within_N_steps(start, pathtiles, N):
+    results = set()
+    for pathtile in pathtiles:
+        diff = abs(start[0] - pathtile[0]) + abs(start[1] - pathtile[1])
+        if 1 < diff <= N:
+            results.add((pathtile, diff))
+
+    return results
 
 def print_grid(grid):
     print("\n".join("".join(row) for row in grid))
 
 def do_part(part):
+    grid = np.array([list(l) for l in text.split('\n')])
     W,_ = grid.shape
     start = tuple(np.argwhere(grid == 'S')[0])
     end = tuple(np.argwhere(grid == 'E')[0])
@@ -58,35 +62,52 @@ def do_part(part):
     for i,pt in enumerate(best_path):
         best_path_map[pt] = i
 
-    seen = set()
     pathtiles = [tuple(pt) for pt in np.argwhere(grid == '.')] + [start] + [end]
-    directions = [(0,1),(0,-1),(1,0),(-1,0)]
-    picoseconds_saved = collections.defaultdict(int)
-
-    for pathtile in pathtiles:
-        for direction in directions:
-            go_one = add(pathtile, direction)
-            go_two = add(go_one, direction)
-
-            if go_one in seen or not in_bounds(go_two):
-                continue
-
-            if go_one not in pathtiles and go_two in pathtiles:
-                diff = abs(best_path_map[go_two] - best_path_map[pathtile])
-                picoseconds_saved[diff-2] += 1
-                seen.add(go_one)
 
     if part == 1:
+
+        seen = set()
+        picoseconds_saved = collections.defaultdict(int)
+
+        for pathtile in pathtiles:
+            candidates = get_path_tiles_within_N_steps(pathtile, pathtiles, 2)
+
+            for cheattile,cheatlen in candidates:
+                hashed_cheat = tuple(sorted([pathtile, cheattile]))
+
+                if hashed_cheat in seen:
+                    continue
+
+                saved = abs(best_path_map[cheattile] - best_path_map[pathtile])
+                picoseconds_saved[saved - cheatlen] += 1
+                seen.add(hashed_cheat)
+
         return sum([picoseconds_saved[k] for k in picoseconds_saved.keys() if k >= 100])
 
     else:
-        pass
 
+        seen = set()
+        picoseconds_saved = collections.defaultdict(int)
+
+        for pathtile in pathtiles:
+            candidates = get_path_tiles_within_N_steps(pathtile, pathtiles, 20)
+
+            for cheattile,cheatlen in candidates:
+                hashed_cheat = tuple(sorted([pathtile, cheattile]))
+
+                if hashed_cheat in seen:
+                    continue
+
+                saved = abs(best_path_map[cheattile] - best_path_map[pathtile])
+                picoseconds_saved[saved - cheatlen] += 1
+                seen.add(hashed_cheat)
+
+        return sum([picoseconds_saved[k] for k in picoseconds_saved.keys() if k >= 100])
 
 import time
 start = time.perf_counter()
 print(do_part(1))
 print(f"Execution time: {time.perf_counter() - start:.4f} seconds")
-# start = time.perf_counter()
-# print(do_part(2))
-# print(f"Execution time: {time.perf_counter() - start:.4f} seconds")
+start = time.perf_counter()
+print(do_part(2))
+print(f"Execution time: {time.perf_counter() - start:.4f} seconds")
