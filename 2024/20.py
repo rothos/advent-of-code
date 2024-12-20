@@ -8,14 +8,14 @@ from functools import cache
 
 grid = np.array([list(l) for l in text.split('\n')])
 
-def shortest_path(grid, start, is_end_fn, get_neighbors_fn):
+def shortest_path(grid, start, end, get_neighbors_fn):
     seen = set()
     queue = [(0, (start, [start]))]
     while queue:
         cost, (node, path) = heapq.heappop(queue)
         if node not in seen:
             seen.add(node)
-            if is_end_fn(node):
+            if node == end:
                 return path,cost
             for neighbor,move_cost in get_neighbors_fn(grid, node):
                 heapq.heappush(queue, (cost + move_cost, (neighbor, path + [neighbor])))
@@ -37,42 +37,47 @@ def add(a,b):
 def negate(v):
     return (-v[0], -v[1])
 
+def in_bounds(pt):
+    W,_ = grid.shape
+    x,y = pt
+    return 0 <= x < W and 0 <= y < W
+
+def get_path_tiles_within_N_steps(start, pathtiles):
+    pass
+
+def print_grid(grid):
+    print("\n".join("".join(row) for row in grid))
+
 def do_part(part):
-
-    def is_end_fn(node):
-        return node == end
-
     W,_ = grid.shape
     start = tuple(np.argwhere(grid == 'S')[0])
     end = tuple(np.argwhere(grid == 'E')[0])
+
+    best_path, best_len = shortest_path(grid, start, end, get_neighbors_fn)
+    best_path_map = dict()
+    for i,pt in enumerate(best_path):
+        best_path_map[pt] = i
+
+    seen = set()
+    pathtiles = [tuple(pt) for pt in np.argwhere(grid == '.')] + [start] + [end]
     directions = [(0,1),(0,-1),(1,0),(-1,0)]
-    pathtiles = [tuple(p) for p in np.argwhere(grid == '.')]
+    picoseconds_saved = collections.defaultdict(int)
 
-    # candidates = set()
+    for pathtile in pathtiles:
+        for direction in directions:
+            go_one = add(pathtile, direction)
+            go_two = add(go_one, direction)
 
-    # for pathtile in pathtiles:
-    #     for direction in directions:
-    #         tile = add(pathtile, direction)
-    #         if grid[tile] == '#' and grid[add(tile, direction)] == '.':
-    #             candidates += (pathtile, add(tile, direction))
+            if go_one in seen or not in_bounds(go_two):
+                continue
 
-    candidates = set([add(p,direction) for p in pathtiles for direction in directions if grid[*add(p,direction)] == '#'])
-    candidates -= set(c for c in candidates if c[0] == 0 or c[1] == 0 or c[0] == W-1 or c[1] == W-1)
-    _,best_len = shortest_path(grid, start, is_end_fn, get_neighbors_fn)
-
-    better_lens = collections.defaultdict(int)
+            if go_one not in pathtiles and go_two in pathtiles:
+                diff = abs(best_path_map[go_two] - best_path_map[pathtile])
+                picoseconds_saved[diff-2] += 1
+                seen.add(go_one)
 
     if part == 1:
-        for i,candidate in enumerate(candidates):
-            grid[*candidate] = '.'
-            _,new_len = shortest_path(grid, start, is_end_fn, get_neighbors_fn)
-            if new_len < best_len:
-                better_lens[new_len] += 1
-            grid[*candidate] = '#'
-
-            print(i, '/', len(candidates))
-
-        return sum(better_lens[k] for k in better_lens.keys() if best_len-k >= 100)
+        return sum([picoseconds_saved[k] for k in picoseconds_saved.keys() if k >= 100])
 
     else:
         pass
