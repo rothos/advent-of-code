@@ -1,43 +1,30 @@
-text = open("input20.txt", 'r').read()
-# text = open("input20test.txt", 'r').read()
+text = open("input20.txt", 'r').read(); test = 0
+# text = open("input20test.txt", 'r').read(); test = 1
 
 import numpy as np
 import heapq
 import collections
 from functools import cache
 
-def shortest_path(grid, start, end, get_neighbors_fn):
-    seen = set()
-    queue = [(0, (start, [start]))]
-    while queue:
-        cost, (node, path) = heapq.heappop(queue)
-        if node not in seen:
-            seen.add(node)
-            if node == end:
-                return path,cost
-            for neighbor,move_cost in get_neighbors_fn(grid, node):
-                heapq.heappush(queue, (cost + move_cost, (neighbor, path + [neighbor])))
-    return None
+def build_map(grid, cur, end):
+    seen = set(cur)
+    path_map = dict()
+    path_map[cur] = 0
+    i = 1
+    not_to_end = True
+    while not_to_end:
+        for direction in [(0,-1), (0,1), (-1,0), (1,0)]:
+            nex = (cur[0]+direction[0], cur[1]+direction[1])
+            if nex not in seen and grid[nex] != "#":
+                path_map[nex] = i
+                seen.add(nex)
+                if nex == end:
+                    not_to_end = False
+                i += 1
+                cur = nex
+                break
 
-def get_neighbors_fn(grid, node):
-    W,_ = grid.shape
-    x,y = node
-    neighbors = []
-    if x+1 < W and grid[(x+1,y)] != '#': neighbors.append(((x+1,y), 1))
-    if x-1 >= 0 and grid[(x-1,y)] != '#': neighbors.append(((x-1,y), 1))
-    if y+1 < W and grid[(x,y+1)] != '#': neighbors.append(((x,y+1), 1))
-    if y-1 >= 0 and grid[(x,y-1)] != '#': neighbors.append(((x,y-1), 1))
-    return neighbors
-
-def add(a,b):
-    return (a[0]+b[0], a[1]+b[1])
-
-def negate(v):
-    return (-v[0], -v[1])
-
-def in_bounds(W, pt):
-    x,y = pt
-    return 0 <= x < W and 0 <= y < W
+    return path_map
 
 def get_path_tiles_within_N_steps(start, pathtiles, N):
     results = set()
@@ -53,56 +40,31 @@ def print_grid(grid):
 
 def do_part(part):
     grid = np.array([list(l) for l in text.split('\n')])
-    W,_ = grid.shape
     start = tuple(np.argwhere(grid == 'S')[0])
     end = tuple(np.argwhere(grid == 'E')[0])
-
-    best_path, best_len = shortest_path(grid, start, end, get_neighbors_fn)
-    best_path_map = dict()
-    for i,pt in enumerate(best_path):
-        best_path_map[pt] = i
-
+    path_map = build_map(grid, start, end)
     pathtiles = [tuple(pt) for pt in np.argwhere(grid == '.')] + [start] + [end]
 
-    if part == 1:
+    goal_saved = 100 if not test else 10
+    allowed_cheat_len = 2 if part == 1 else 20
 
-        seen = set()
-        picoseconds_saved = collections.defaultdict(int)
+    seen = set()
+    picoseconds_saved = collections.defaultdict(int)
 
-        for pathtile in pathtiles:
-            candidates = get_path_tiles_within_N_steps(pathtile, pathtiles, 2)
+    for pathtile in pathtiles:
+        candidates = get_path_tiles_within_N_steps(pathtile, pathtiles, allowed_cheat_len)
 
-            for cheattile,cheatlen in candidates:
-                hashed_cheat = tuple(sorted([pathtile, cheattile]))
+        for cheattile,cheatlen in candidates:
+            hashed_cheat = tuple(sorted([pathtile, cheattile]))
 
-                if hashed_cheat in seen:
-                    continue
+            if hashed_cheat in seen:
+                continue
 
-                saved = abs(best_path_map[cheattile] - best_path_map[pathtile])
-                picoseconds_saved[saved - cheatlen] += 1
-                seen.add(hashed_cheat)
+            saved = abs(path_map[cheattile] - path_map[pathtile])
+            picoseconds_saved[saved - cheatlen] += 1
+            seen.add(hashed_cheat)
 
-        return sum([picoseconds_saved[k] for k in picoseconds_saved.keys() if k >= 100])
-
-    else:
-
-        seen = set()
-        picoseconds_saved = collections.defaultdict(int)
-
-        for pathtile in pathtiles:
-            candidates = get_path_tiles_within_N_steps(pathtile, pathtiles, 20)
-
-            for cheattile,cheatlen in candidates:
-                hashed_cheat = tuple(sorted([pathtile, cheattile]))
-
-                if hashed_cheat in seen:
-                    continue
-
-                saved = abs(best_path_map[cheattile] - best_path_map[pathtile])
-                picoseconds_saved[saved - cheatlen] += 1
-                seen.add(hashed_cheat)
-
-        return sum([picoseconds_saved[k] for k in picoseconds_saved.keys() if k >= 100])
+    return sum([picoseconds_saved[k] for k in picoseconds_saved.keys() if k >= goal_saved])
 
 import time
 start = time.perf_counter()
