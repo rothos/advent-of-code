@@ -1,170 +1,108 @@
 text = open("input21.txt", 'r').read()
 text = open("input21test.txt", 'r').read()
 
+import textwrap
+from functools import cache
+
 graph = {
     "A^": "<",
     "A<": "v<<",
     "Av": "v<",
     "A>": "v",
+    "AA": "",
 
     "^A": ">",
     "^<": "v<",
     "^v": "v",
     "^>": "v>",
+    "^^": "",
 
     "<^": ">^",
     "<A": ">>^",
     "<v": ">",
     "<>": ">>",
+    "<<": "",
 
     "v^": "^",
     "vA": ">^",
     "v<": "<",
     "v>": ">",
+    "vv": "",
 
     ">^": "<^",
     ">A": "^",
     "><": "<<",
     ">v": "<",
+    ">>": "",
 }
 
-def process(string):
+# def process_string_as_parts(string, part_len=200):
+#     outstr = ""
+#     parts = textwrap.wrap(string, part_len)
+#     curpos = "A"
+#     for i,part in enumerate(parts):
+#         outstr += process(part, curpos=curpos)
+#         curpos = part[-1]
+#     return outstr
+
+def process_string_as_parts(string):
+    outstr = ""
+    parts = string.split("A")
+    curpos = "A"
+    for i,part in enumerate(parts):
+        if i != len(parts) - 1:
+            part = part + "A"
+        outstr += process(part, curpos=curpos)
+        curpos = curpos if not len(part) else part[-1]
+    return outstr
+
+@cache
+def process(string, curpos="A"):
     totals = []
     newstring = ""
-    curpos = "A"
     for c in string:
-        if curpos == c:
-            newstring += "A"
-        else:
-            newstring += graph[curpos + c] + "A"
+        newstring += graph[curpos + c] + "A"
         curpos = c
     return newstring
 
 def do_part(part):
 
-    if part == 1:
-        strings = [
-            # (29, "<A^A>^^AvvvA"),
-            # (980, "^^^A<AvvvA>A"),
-            # (179, "^<<A^^A>>AvvvA"),
-            # (456, "^^<<A>A>AvvA"),
-            # (379, "^A<<^^A>>AvvvA"),
+    strings = [
+        (208, "<^AvA^^^Avvv>A"),
+        (540, "<^^A<A>vvA>A"),
+        (685, "^^A<^AvAvv>A"),
+        (879, "<^^^A<A>>AvvvA"),
+        (826, "<^^^AvvA^>AvvA")
+    ]
 
-            (208, "<^AvA^^^Avvv>A"),
-            (540, "<^^A<A>vvA>A"),
-            (685, "^^A<^AvAvv>A"),
-            (879, "<^^^A<A>>AvvvA"),
-            (826, "<^^^AvvA^>AvvA")
-        ]
+    if part == 1:
 
         totals = []
         for n,string in strings:
             newstring = string
             for k in range(2):
-                newstring = process(newstring)
-            # newstring = process(process(string))
-            # print(len(newstring), process(string), newstring)
+                newstring = process_string_as_parts(newstring)
             totals.append(n * len(newstring))
 
-        print(totals, sum(totals))
+        return sum(totals)
 
     else:
-        pass
+
+        totals = []
+        for n,string in strings:
+            newstring = string
+            for k in range(15):
+                newstring = process_string_as_parts(newstring)
+            totals.append(n * len(newstring))
+
+        return sum(totals)
 
 
 import time
 start = time.perf_counter()
 print(do_part(1))
-# 615366 wrong
-# 237458 wrong
-# 222166 wrong
-# 224326 right!!
 print(f"Execution time: {time.perf_counter() - start:.4f} seconds")
 
 start = time.perf_counter()
 print(do_part(2))
 print(f"Execution time: {time.perf_counter() - start:.4f} seconds")
-
-
-
-
-"""
-+---+---+---+
-| 7 | 8 | 9 |
-+---+---+---+
-| 4 | 5 | 6 |
-+---+---+---+
-| 1 | 2 | 3 |
-+---+---+---+
-    | 0 | A |
-    +---+---+
-
-    +---+---+
-    | ^ | A |
-+---+---+---+
-| < | v | > |
-+---+---+---+
-
-029A
-<A^A>^^AvvvA
-
-980A
-^^^A<AvvvA>A
-
-179A
-^<<A^^A>>AvvvA
-
-456A
-^^<<A>A>AvvA
-
-379A
-^A<<^^A>>AvvvA
-
-
-
-
-208A
-<^AvA^^^A>vvvA
-
-540A
-<^^A<A>vvA>A
-
-685A
-^^A^<AvA>vvA
-
-879A
-^^^<A<A>>AvvvA
-
-826A
-^^^<AvvA^>AvvA
-
-
-
-
-
-
-
-
-
-
->A<AAv<AA^>>AvAA^Av<AAA>^A
-vA^A<<vA^>>AA<<vA>A>^AA<Av>AA^Av<A>^AA<A>Av<A<A^>>AAAvA<^A>A
-
-
->Av<<AA>^AA>AvAA^A<vAAA>^A
-vA^A<vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A
-
-
-    +---+---+
-    | ^ | A |
-+---+---+---+
-| < | v | > |
-+---+---+---+
-
-
-<v<A>>^AvA^A<vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A
-
-<A>A<AAv<AA^>>AvAA^Av<AAA>^A
-<<vA^>>AvA^A<<vA^>>AA<<vA>A>^AA<Av>AA^Av<A>^AA<A>Av<A<A^>>AAAvA<^A>A
-
-"""
