@@ -36,14 +36,11 @@ graph = {
     ">>": "",
 }
 
-# def process_string_as_parts(string, part_len=200):
-#     outstr = ""
-#     parts = textwrap.wrap(string, part_len)
-#     curpos = "A"
-#     for i,part in enumerate(parts):
-#         outstr += process(part, curpos=curpos)
-#         curpos = part[-1]
-#     return outstr
+def process_multiruns(string, curpos, num_runs):
+    for _ in range(num_runs):
+        string = process(string, curpos=curpos)
+        curpos = "A"
+    return string
 
 def process_string_as_parts(string):
     outstr = ""
@@ -64,6 +61,25 @@ def process(string, curpos="A"):
         newstring += graph[curpos + c] + "A"
         curpos = c
     return newstring
+
+def process_part2(string, params):
+    num_preruns, num_runs, num_iters = params
+
+    counts = dict()
+    for key in graph.keys():
+        counts[key] = len(process_multiruns(key[1], key[0], num_runs))
+
+    string = process_multiruns(string, "A", num_preruns+num_runs)
+    curpos = "A"
+
+    total = 0
+    if num_iters > 1:
+        curpos = "A"
+        for c in string:
+            total += counts[curpos+c]
+            curpos = c
+    
+    return total
 
 def do_part(part):
 
@@ -87,22 +103,32 @@ def do_part(part):
         return sum(totals)
 
     else:
+        # 1, 12, 12
 
-        totals = []
         for n,string in strings:
-            newstring = string
-            for k in range(15):
-                newstring = process_string_as_parts(newstring)
-            totals.append(n * len(newstring))
+            # print(len(process_multiruns(string, "A", 12)))
+            # print(process_part2(string, [4, 4, 2]))
+            # result = process_part2(string, [0, 6, 2])
+            result = process_part2(string, [1, 12, 2])
 
-        return sum(totals)
+        return result
+
+
+        # totals = []
+        # for n,string in strings:
+        #     newstring = string
+        #     for k in range(1):
+        #         newstring = process_string_as_parts(newstring)
+        #     totals.append(n * len(newstring))
+        # return sum(totals)
 
 
 import time
-start = time.perf_counter()
-print(do_part(1))
-print(f"Execution time: {time.perf_counter() - start:.4f} seconds")
+# start = time.perf_counter()
+# print(do_part(1))
+# print(f"Execution time: {time.perf_counter() - start:.4f} seconds")
 
 start = time.perf_counter()
 print(do_part(2))
+# 151659080102 too low
 print(f"Execution time: {time.perf_counter() - start:.4f} seconds")
