@@ -1,8 +1,6 @@
 text = open("input24.txt", 'r').read()
 # text = open("input24test.txt", 'r').read()
 
-from itertools import combinations
-
 def get_output(gates, values):
     while gates:
         prelen = len(gates)
@@ -14,7 +12,7 @@ def get_output(gates, values):
             else:
                 newgates.append((in1,op,in2,out))
 
-        gates = newgates.copy()
+        gates = newgates
 
         if prelen == len(gates) and prelen > 0:
             return None
@@ -22,22 +20,10 @@ def get_output(gates, values):
     zz = sorted([x for x in values.keys() if x[0] == 'z'])[::-1]
     return "".join([str(values[x]) for x in zz])
 
-def get_expected_output(values):
-    xx = sorted([x for x in values.keys() if x[0] == 'x'])[::-1]
-    yy = sorted([y for y in values.keys() if y[0] == 'y'])[::-1]
-    xnum = int("".join([str(values[x]) for x in xx]), 2)
-    ynum = int("".join([str(values[y]) for y in yy]), 2)
-    return format(xnum + ynum, 'b')
-
 def operate(in1, in2, op):
     if op == "AND": return in1 and in2
     if op == "OR": return in1 or in2
     if op == "XOR": return in1 ^ in2
-    print('error 2377')
-    return None
-
-def compare(aa, bb):
-    return sum(aa[i] != bb[i] for i in range(len(aa)))
 
 def swap_outputs(gates, out1, out2):
     for k,gate in enumerate(gates):
@@ -62,11 +48,9 @@ def do_part(part):
         wires.add(out)
 
     if part == 1:
-
         return int(get_output(gates, values), 2)
 
     else:
-
         def get_output_name(input1, input2, operator=None):
             for in1,op,in2,out in gates:
                 if sorted([in1, in2]) == sorted([input1, input2]):
