@@ -7,12 +7,12 @@ def get_output(gates, values):
     while gates:
         prelen = len(gates)
         newgates = []
-        for i1,op,i2,out in gates:
-            if i1 in values and i2 in values:
+        for in1,op,in2,out in gates:
+            if in1 in values and in2 in values:
                 if out in values: print('error 7834')
-                values[out] = operate(values[i1], values[i2], op)
+                values[out] = operate(values[in1], values[in2], op)
             else:
-                newgates.append((i1,op,i2,out))
+                newgates.append((in1,op,in2,out))
 
         gates = newgates.copy()
 
@@ -29,15 +29,24 @@ def get_expected_output(values):
     ynum = int("".join([str(values[y]) for y in yy]), 2)
     return format(xnum + ynum, 'b')
 
-def operate(i1, i2, op):
-    if op == "AND": return i1 and i2
-    if op == "OR": return i1 or i2
-    if op == "XOR": return i1 ^ i2
+def operate(in1, in2, op):
+    if op == "AND": return in1 and in2
+    if op == "OR": return in1 or in2
+    if op == "XOR": return in1 ^ in2
     print('error 2377')
     return None
 
 def compare(aa, bb):
-    return sum(aa[i] == bb[i] for i in range(len(aa)))
+    return sum(aa[i] != bb[i] for i in range(len(aa)))
+
+def swap_outputs(gates, out1, out2):
+    for k,gate in enumerate(gates):
+        in1, op, in2, out = gate
+        if out == out1:
+            gates[k] = (in1, op, in2, out2)
+        if out == out2:
+            gates[k] = (in1, op, in2, out1)
+    return gates
 
 def do_part(part):
 
@@ -46,10 +55,10 @@ def do_part(part):
     gates = []
     wires = set(values.keys())
     for gate in tmpgates.splitlines():
-        i1,op,i2,_,out = gate.split()
-        gates.append((i1,op,i2,out))
-        wires.add(i1)
-        wires.add(i2)
+        in1,op,in2,_,out = gate.split()
+        gates.append((in1,op,in2,out))
+        wires.add(in1)
+        wires.add(in2)
         wires.add(out)
 
     if part == 1:
@@ -57,30 +66,55 @@ def do_part(part):
         return int(get_output(gates, values), 2)
 
     else:
-        
-        output = get_output(gates.copy(), values.copy()).zfill(46)
-        expected = get_expected_output(values).zfill(46)
-        score = compare(expected, output)
 
-        outputs = [x[3] for x in gates]
+        def get_output_name(input1, input2, operator=None):
+            for in1,op,in2,out in gates:
+                if sorted([in1, in2]) == sorted([input1, input2]):
+                    if not operator or operator == op:
+                        return out
+            return None
 
-        candidates = set()
+        swaps = [
+            ('z14', 'hbk'),
+            ('z18', 'kvn'),
+            ('z23', 'dbb'),
+            ('tfn', 'cvh')
+        ]
 
-        for a,b in combinations(outputs, 2):
-            xgates = gates.copy()
-            for k,xgate in enumerate(xgates):
-                if xgate[3] == a:
-                    xgates[k] = (xgates[k][0], xgates[k][1], xgates[k][2], b)
-                if xgate[3] == b:
-                    xgates[k] = (xgates[k][0], xgates[k][1], xgates[k][2], a)
+        names = []
+        for a,b in swaps:
+            gates = swap_outputs(gates, a, b)
+            names.append(a)
+            names.append(b)
 
-            xoutput = get_output(xgates.copy(), values.copy())
+        #---- Code to verify circuit ----#
+        debug = 0
+        carry = get_output_name('x00', 'y00', 'AND')
+        bitnum = 1
 
-            if xoutput and compare(expected, xoutput.zfill(46)) > score:
-                count += 1
+        # Build full adders until something is amiss
+        while bitnum < 45:
+            in1 = 'x' + str(bitnum).zfill(2)
+            in2 = 'y' + str(bitnum).zfill(2)
+            expected_zout = 'z' + str(bitnum).zfill(2)
+            ins_xor = get_output_name(in1, in2, 'XOR')
+            ins_and = get_output_name(in1, in2, 'AND')
+            zout = get_output_name(ins_xor, carry, 'XOR')
+            tmp = get_output_name(ins_xor, carry, 'AND')
 
-        return count
+            if debug and zout != expected_zout:
+                print("ins_xor:", ins_xor)
+                print("ins_and:", ins_and)
+                print("zout:", zout)
+                print("tmp:", tmp)
+            assert zout == expected_zout, f"Error: expected {expected_zout}, got {zout}"
 
+            carry = get_output_name(ins_and, tmp, 'OR')
+            if debug:
+                print(f"Completed {zout}, carry is {carry}")
+            bitnum += 1
+
+        return ",".join(sorted(names))
 
 import time
 start = time.perf_counter()
