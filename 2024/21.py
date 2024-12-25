@@ -1,13 +1,10 @@
 text = open("input21.txt", 'r').read()
-text = open("input21test.txt", 'r').read()
-
-import textwrap
-from functools import cache
+# text = open("input21test.txt", 'r').read()
 
 graph = {
     "A^": "<",
     "A<": "v<<",
-    "Av": "v<",
+    "Av": "<v",
     "A>": "v",
     "AA": "",
 
@@ -24,7 +21,7 @@ graph = {
     "<<": "",
 
     "v^": "^",
-    "vA": ">^",
+    "vA": "^>",
     "v<": "<",
     "v>": ">",
     "vv": "",
@@ -36,24 +33,6 @@ graph = {
     ">>": "",
 }
 
-def process_multiruns(string, curpos, num_runs):
-    for _ in range(num_runs):
-        string = process(string, curpos=curpos)
-        curpos = "A"
-    return string
-
-def process_string_as_parts(string):
-    outstr = ""
-    parts = string.split("A")
-    curpos = "A"
-    for i,part in enumerate(parts):
-        if i != len(parts) - 1:
-            part = part + "A"
-        outstr += process(part, curpos=curpos)
-        curpos = curpos if not len(part) else part[-1]
-    return outstr
-
-@cache
 def process(string, curpos="A"):
     totals = []
     newstring = ""
@@ -62,33 +41,97 @@ def process(string, curpos="A"):
         curpos = c
     return newstring
 
-def process_part2(string, params):
-    num_preruns, num_runs, num_iters = params
+def zeros(d):
+    out = d.copy()
+    for key in out:
+        out[key] = 0
+    return out
 
-    counts = dict()
-    for key in graph.keys():
-        counts[key] = len(process_multiruns(key[1], key[0], num_runs))
+def string_to_pairs(string):
+    return [string[i:i+2] for i in range(len(string)-1)]
 
-    string = process_multiruns(string, "A", num_preruns+num_runs)
-    curpos = "A"
+def get_complexity(string, num_robots):
+    # freqs = {
+    #     "AA": 0, # "A",
+    #     "A^": 0, # "<A",
+    #     "A<": 0, # "v<<A",
+    #     "Av": 0, # "<vA",
+    #     "A>": 0, # "vA",
+    #     "^A": 0, # ">A",
+    #     "^>": 0, # "v>A",
+    #     "<^": 0, # ">^A",
+    #     "<A": 0, # ">>^A",
+    #     "vA": 0, # "^>A",
+    #     ">^": 0, # "<^A",
+    #     ">A": 0, # "^A",
+    # }
 
-    total = 0
-    if num_iters > 1:
-        curpos = "A"
-        for c in string:
-            total += counts[curpos+c]
-            curpos = c
-    
-    return total
+    freqs =  {
+        "A^": 0,
+        "A<": 0,
+        "Av": 0,
+        "A>": 0,
+        "AA": 0,
+        "^A": 0,
+        "^<": 0,
+        "^v": 0,
+        "^>": 0,
+        "^^": 0,
+        "<^": 0,
+        "<A": 0,
+        "<v": 0,
+        "<>": 0,
+        "<<": 0,
+        "v^": 0,
+        "vA": 0,
+        "v<": 0,
+        "v>": 0,
+        "vv": 0,
+        ">^": 0,
+        ">A": 0,
+        "><": 0,
+        ">v": 0,
+        ">>": 0,
+    }
+
+
+    def map_to_freq_table(ab):
+        if ab in freqs: return ab
+        elif ab in ['^^', '>>', '<<', 'vv']: return 'AA'
+        elif ab in ['v<', '>v']: return 'A^'
+        elif ab in ['<v', 'v>']: return '^A'
+        elif ab in ['^<']: return '>^'
+        print('error 1856')
+        return None
+
+    # Convert string to freqs
+    for pair in string_to_pairs(string):
+        freqs[pair] += 1
+
+    print(freqs)
+
+    # Loop through the robots
+    for _ in range(num_robots):
+        nums, types = freqs.values(), freqs.keys()
+        newfreqs = zeros(freqs)
+        for type in freqs:
+            if freqs[type]:
+                for outtype in string_to_pairs(graph[type] + "A"):
+                    newfreqs[outtype] += freqs[type]
+
+        freqs = newfreqs
+
+    print(freqs)
+    return sum(freqs[k] for k in freqs.keys()) + 1
 
 def do_part(part):
 
     strings = [
         (208, "<^AvA^^^Avvv>A"),
-        (540, "<^^A<A>vvA>A"),
-        (685, "^^A<^AvAvv>A"),
-        (879, "<^^^A<A>>AvvvA"),
-        (826, "<^^^AvvA^>AvvA")
+        # (540, "<^^A<A>vvA>A"),
+        # (685, "^^A<^AvAvv>A"),
+        # (879, "<^^^A<A>>AvvvA"),
+        # (826, "<^^^AvvA^>AvvA")
     ]
 
     if part == 1:
@@ -96,31 +139,24 @@ def do_part(part):
         totals = []
         for n,string in strings:
             newstring = string
-            for k in range(2):
-                newstring = process_string_as_parts(newstring)
-            totals.append(n * len(newstring))
+            totals.append(n * len(process(process(string))))
+            # totals.append(n * len(string))
 
         return sum(totals)
 
     else:
-        # 1, 12, 12
 
+        totals = []
         for n,string in strings:
-            # print(len(process_multiruns(string, "A", 12)))
-            # print(process_part2(string, [4, 4, 2]))
-            # result = process_part2(string, [0, 6, 2])
-            result = process_part2(string, [1, 12, 2])
+            newstring = string
+            print(get_complexity(string, 1))
+            totals.append(n * get_complexity(string, 1))
 
-        return result
+        print(string)
+        print(process(string))
 
+        return sum(totals)
 
-        # totals = []
-        # for n,string in strings:
-        #     newstring = string
-        #     for k in range(1):
-        #         newstring = process_string_as_parts(newstring)
-        #     totals.append(n * len(newstring))
-        # return sum(totals)
 
 
 import time
