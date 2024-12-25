@@ -9,11 +9,7 @@ def parse_block(block):
         heights.append( sum(line[i] == '#' for line in lines) - 1 )
     return heights, is_lock
 
-def test_lock_and_key(lock, key):
-    return all(lock[i]+key[i] <= 5 for i in range(5))
-
-def do_part(part):
-
+def go():
     locks = []
     keys = []
     for block in text.split("\n\n"):
@@ -24,22 +20,14 @@ def do_part(part):
             keys.append(heights)
 
     total = 0
-    if part == 1:
-        for lock in locks:
-            for key in keys:
-                if test_lock_and_key(lock, key):
-                    total += 1
+    for lock in locks:
+        for key in keys:
+            total += all(lock[i]+key[i] <= 5 for i in range(5))
 
-        return total
-
-    else:
-        pass
+    return total
 
 
 import time
 start = time.perf_counter()
-print(do_part(1))
-print(f"Execution time: {time.perf_counter() - start:.4f} seconds")
-start = time.perf_counter()
-print(do_part(2))
+print(go())
 print(f"Execution time: {time.perf_counter() - start:.4f} seconds")
