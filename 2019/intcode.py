@@ -31,19 +31,22 @@ def interpret_params(params, modes, program, as_string=False):
         params = [params]
 
     ss = []
-    pp = []
     for i,p in enumerate(params):
         if modes[i]:
-            ss.append(str(p))
-            pp.append(p)
+            if as_string:
+                ss.append(str(p))
+            else:
+                ss.append(p)
         else:
-            ss.append(f"program[{p}]={program[p]}")
-            pp.append(program[p])
+            if as_string:
+                ss.append(f"program[{p}]={program[p]}")
+            else:
+                ss.append(program[p])
 
     if as_string:
         return "[ " + ", ".join(ss) + " ]"
     else:
-        return pp
+        return ss
 
 def parse_opcode(num):
     # Mode 0: Parameter mode (params are positions)
