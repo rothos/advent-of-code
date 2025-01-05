@@ -22,10 +22,8 @@ if [ ! -f "$python_file" ]; then
     cat << EOF > "$python_file"
 import time
 
-text = open("${day}.txt", 'r').read()
-text = open("${day}test.txt", 'r').read()
-
-
+text = open("${day}.txt", 'r').read(); TEST = False
+text = open("${day}test.txt", 'r').read(); TEST = True
 
 def do_part(text, part):
 
