@@ -1,29 +1,8 @@
 import time
+from intcode import run
 
 text = open("2.txt", 'r').read()
 # text = open("2test.txt", 'r').read()
-
-
-def run(_program):
-    program = _program.copy()
-    pos = 0
-    while True:
-        opcode = program[pos]
-        match opcode:
-            case 99:
-                return program
-            case 1:
-                func = lambda x,y: x + y
-            case 2:
-                func = lambda x,y: x * y
-            case _:
-                print("error! unknown opcode")
-                return None
-
-        i,j,k = program[pos+1], program[pos+2], program[pos+3]
-        program[k] = func(program[i], program[j])
-        pos += 4
-
 
 def do_part(text, part):
 
@@ -32,7 +11,7 @@ def do_part(text, part):
     if part == 1:
         program[1] = 12
         program[2] = 2
-        program = run(program)
+        program, _ = run(program)
         return program[0]
 
     else:
@@ -41,8 +20,8 @@ def do_part(text, part):
             for verb in range(100):
                 program[1] = noun
                 program[2] = verb
-                output = run(program)
-                if output[0] == target:
+                result, _ = run(program)
+                if result[0] == target:
                     return 100*noun + verb
 
 

@@ -26,10 +26,6 @@ INSTRUCTION_NAMES = {
     99: "HALT",
 }
 
-def printt(aa):
-    for a in aa:
-        print(f"  {type(a)}: {a}")
-
 def interpret_params(params, modes, program, as_string=False):
     if type(params) == int:
         params = [params]
