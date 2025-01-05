@@ -1,0 +1,66 @@
+#!/bin/bash
+
+# Check if an argument is provided
+if [ $# -eq 0 ]; then
+    echo "Please provide a day number"
+    exit 1
+fi
+
+# Day number from first argument
+day=$1
+
+# Python script filename
+python_file="${day}.py"
+input_file="${day}.txt"
+input_test_file="${day}test.txt"
+
+# Files to open in Sublime
+files_to_open=()
+
+# Create Python script if it doesn't exist
+if [ ! -f "$python_file" ]; then
+    cat << EOF > "$python_file"
+import time
+
+text = open("${day}.txt", 'r').read()
+text = open("${day}test.txt", 'r').read()
+
+
+
+def do_part(text, part):
+
+    
+
+    if part == 1:
+        pass
+
+    else:
+        pass
+
+
+def main():
+    for part in [1, 2]:
+        before = time.perf_counter()
+        answer = do_part(text, part)
+        after = time.perf_counter()
+        elapsed = round((after - before)*1_000_000)
+        unit = "µs"
+        if elapsed >= 1000:
+            elapsed //= 1000
+            unit = "ms"
+        print(f"Part {part}: {answer} ({elapsed:,} {unit})")
+
+main()
+EOF
+fi
+files_to_open+=("$python_file")
+
+[ ! -f "$input_test_file" ] && touch "$input_test_file"
+files_to_open+=("$input_test_file")
+
+# Create input files if they don't exist
+[ ! -f "$input_file" ] && touch "$input_file"
+files_to_open+=("$input_file")
+
+# Open files in Sublime Text
+subl -n "${files_to_open[@]}"
