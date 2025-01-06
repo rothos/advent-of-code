@@ -105,39 +105,29 @@ class IntcodeComputer:
                 num //= 10
             return opcode, modes
 
-        def get_params(last_as_address=False):
+        def get_params(last_as_address=False, as_string=False):
             nonlocal params, modes
+            rel = self.relative_base
             ss = []
-            for i,p in enumerate(params):
-                last = last_as_address and (i == len(params) - 1)
-                match modes[i]:
-                    case 0:
-                        s = self.read(p) if not last else p
-                    case 1:
-                        assert not last
-                        s = p
-                    case 2:
-                        addr = p + self.relative_base
-                        s = self.read(addr) if not last else addr
-                ss.append(s)
+            if not as_string:
+                for i,p in enumerate(params):
+                    last = last_as_address and (i == len(params) - 1)
+                    assert not (last and modes[i] == 1)
+                    match modes[i]:
+                        case 0: s = self.read(p) if not last else p
+                        case 1: s = p
+                        case 2: s = self.read(p+rel) if not last else p+rel
+                    ss.append(s)
+                return ss
 
-            return ss
-
-        def get_params_as_str():
-            nonlocal params, modes
-            ss = []
-            for i,p in enumerate(params):
-                match modes[i]:
-                    case 0:
-                        s = f"program[{p}]={self.read(p)}"
-                    case 1:
-                        s = str(p)
-                    case 2:
-                        rel = self.relative_base
-                        s = f"program[{p+rel}]={self.read(p+rel)}"
-                ss.append(s)
-
-            return ", ".join(ss)
+            else:
+                for i,p in enumerate(params):
+                    match modes[i]:
+                        case 0: s = f"program[{p}]={self.read(p)}"
+                        case 1: s = str(p)
+                        case 2: s = f"program[{p}+{rel}]={self.read(p+rel)}"
+                    ss.append(s)
+                return ", ".join(ss)
 
         while True:
 
@@ -149,7 +139,7 @@ class IntcodeComputer:
             if self.DEBUG: print(f"[{self.counter}] New instruction to {INSTRUCTION_NAMES[opcode]} at pos={self.pos}:")
             if self.DEBUG: print(f"    Instruction: {instruction}")
             if self.DEBUG: print(f"    Parsed {self.read()} as opcode={opcode}, modes={modes}")
-            if self.DEBUG: print(f"    Parameters: [ {get_params_as_str()} ]")
+            if self.DEBUG: print(f"    Parameters: [ {get_params(as_string=True)} ]")
 
             match opcode:
 
