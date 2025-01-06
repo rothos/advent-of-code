@@ -12,8 +12,8 @@ def do_part(text, part):
     if part == 1:
         program[1] = 12
         program[2] = 2
-        state = computer.run(program=program)
-        return state["program"][0]
+        computer.run(program=program)
+        return computer.program[0]
 
     else:
         target = 19690720
@@ -21,8 +21,8 @@ def do_part(text, part):
             for verb in range(100):
                 program[1] = noun
                 program[2] = verb
-                state = computer.run(program=program, pos=0)
-                if state["program"][0] == target:
+                computer.run(program=program, pos=0)
+                if computer.program[0] == target:
                     return 100*noun + verb
 
 

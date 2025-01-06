@@ -44,6 +44,7 @@ class IntcodeComputer:
         self.input_counter = 0
         self.inputs = []
         self.outputs = []
+        self.outputs_from_this_run = []
         self.instruction_counter = 0
         self.DEBUG = 0
         self.GET_USER_INPUT = 0
@@ -73,14 +74,9 @@ class IntcodeComputer:
                 # For all other attrs, set the value
                 setattr(self, key, setval)
 
-    def get_return_object(self, exit_code=0, error_msg=""):
+    def get_return_object(self, exit_code=0):
         self.exit_code = exit_code
-        return {
-            **self.__dict__,
-            **{
-                "error_msg": error_msg,
-            }
-        }
+        return self.outputs_from_this_run
 
     def interpret_params(self, params, modes, last_as_address=False, as_string=False):
         # Note: The program will break if BOTH last_as_address & as_string are set to True.
@@ -133,11 +129,12 @@ class IntcodeComputer:
     def error(self, msg):
         msg = f"ERROR: {msg} in {inspect.currentframe().f_back.f_code.co_name}"
         print(msg)
-        return self.get_return_object(exit_code=-1, error_msg=msg)
+        return self.get_return_object(exit_code=-1)
 
     def run(self, settings={}, **kwargs):
         self.set_settings({**(settings or {}), **kwargs})
         self.exit_code = None
+        self.outputs_from_this_run = []
 
         if not self.program: self.error("No program provided")
         if self.DEBUG: print(f"Running program (length {len(self.program)})")
@@ -200,6 +197,7 @@ class IntcodeComputer:
                 case 4: # OUTPUT [1 param] [@]a -> output
                     a, = self.interpret_params(program_slice[1], modes)
                     self.outputs.append(a)
+                    self.outputs_from_this_run.append(a)
                     if self.DEBUG:
                         print(f"    New output: {a}{" (" + self.interpret_params(
                                 program_slice[1], modes, as_string=True

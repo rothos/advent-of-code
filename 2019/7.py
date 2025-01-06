@@ -16,9 +16,9 @@ def do_part(text, part):
             input_signal = 0
             for k in range(5):
                 computer = IntcodeComputer(program)
-                state = computer.run(inputs=[phase_signal[k], input_signal])
-                assert state["exit_code"] == 0
-                input_signal = state["outputs"][-1]
+                computer.run(inputs=[phase_signal[k], input_signal])
+                assert computer.exit_code == 0
+                input_signal = computer.outputs[-1]
 
             if best == None or input_signal > best:
                 best = input_signal
@@ -39,8 +39,8 @@ def do_part(text, part):
 
             while True:
                 inputs = [input_signal] if k >= 5 else [phase_signal[k%5], input_signal]
-                state = amplifiers[k%5].run(inputs=inputs, name=f"amplifier{k}")
-                input_signal = state["outputs"][-1]
+                amplifiers[k%5].run(inputs=inputs, name=f"amplifier{k}")
+                input_signal = amplifiers[k%5].outputs[-1]
 
                 if all(amplifiers[k].exit_code == 0 for k in range(5)):
                     break

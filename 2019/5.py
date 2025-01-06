@@ -12,13 +12,13 @@ def do_part(text, part):
     if part == 1:
         
         computer = IntcodeComputer(program)
-        state = computer.run(inputs=1)
-        return state["outputs"][-1]
+        computer.run(inputs=1)
+        return computer.outputs[-1]
 
     else:
 
-        state = computer.run(inputs=5, GET_USER_INPUT=1 if TEST else 0)
-        return state["outputs"][-1]
+        computer.run(inputs=5, GET_USER_INPUT=1 if TEST else 0)
+        return computer.outputs[-1]
 
 
 def main():
