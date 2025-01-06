@@ -34,18 +34,14 @@ class IntcodeComputer:
            -1: error
             0: exited with halt code 99
             1: exited due to awaiting input
-            2: exited because reached MAX_ITERS
         """
         self.pos = 0
         self.relative_base = 0
         self.input_index = 0
         self.inputs = []
         self.outputs = []
-        self.outputs_from_this_run = []
-        self.instruction_counter = 0
+        self.counter = 0
         self.DEBUG = 0
-        self.GET_USER_INPUT = 0
-        self.MAX_ITERS = 0
         self.exit_code = None
 
         self.set_settings({"program": program, **kwargs})
@@ -71,126 +67,113 @@ class IntcodeComputer:
                 # For all other attrs, set the value
                 setattr(self, key, setval)
 
-    def interpret_params(self, params, modes, last_as_address=False, as_string=False):
-        # Note: The program will break if BOTH last_as_address & as_string are set to True.
-        if type(params) == int:
-            params = [params]
-
-        ss = []
-        for i,p in enumerate(params):
-            match modes[i]:
-                case 0:
-                    if last_as_address and i == len(params) - 1:
-                        s = p
-                    else:
-                        s = self.program[p] if not as_string else f"program[{p}]={self.program[p]}"
-                case 1:
-                    s = p if not as_string else str(p)
-                case 2:
-                    if last_as_address and i == len(params) - 1:
-                        s = p + self.relative_base
-                    else:
-                        s = self.program[p + self.relative_base] if not as_string \
-                            else f"program[{p}+{self.relative_base}]={self.program[p + self.relative_base]}"
-            ss.append(s)
-
-        if as_string:
-            return ", ".join(ss)
-        else:
-            return ss
-
-    @staticmethod
-    def parse_opcode(num):
-        # Accepts: integer
-        # Returns: opcode, list of parameter modes
-        #
-        # Mode 0: Parameter mode (params are positions)
-        # Mode 1: Immediate mode (params are values)
-        s = str(num)
-        opcode = int(s[-2:])
-        s = s.zfill(1 + INSTRUCTION_LENGTHS[opcode])
-        modes = [int(c) for c in s[:-2][::-1]]
-        return opcode, modes
-
     def error(self, msg):
         msg = f"ERROR: {msg} in {inspect.currentframe().f_back.f_code.co_name}"
         print(msg)
-        self.exit_code = -1
-        return self.outputs_from_this_run
+        return self.exit(-1)
+
+    def write(self, i, val):
+        self.program[i] = val
+
+    def read(self, i=None, n=None):
+        if i == None:
+            i = self.pos
+        if n == None:
+            return self.program[i]
+        else:
+            return self.program[i:i+n]
+
+    def get_input(self):
+        result = self.inputs[self.input_index]
+        self.input_index += 1
+        return result
+
+    def output(self, val):
+        self.outputs.append(val)
+
+    def exit(self, code, oi=0):
+        self.exit_code = code
+        return self.outputs[oi:] if code != -1 else None
 
     def run(self, **kwargs):
         self.set_settings({**kwargs})
         self.exit_code = None
-        self.outputs_from_this_run = []
+        oi = len(self.outputs)
 
         if not self.program: self.error("No program provided")
         if self.DEBUG: print(f"Running program (length {len(self.program)})")
 
+        def parse_opcode(num):
+            opcode = num % 100
+            num //= 100
+            num_params = INSTRUCTION_LENGTHS[opcode] - 1
+            modes = []
+            for k in range(num_params):
+                modes.append(num % 10)
+                num //= 10
+            return opcode, modes
+
+        def interpret_params(last_as_address=False):
+            nonlocal params, modes
+            ss = []
+            for i,p in enumerate(params):
+                last = last_as_address and (i == len(params) - 1)
+                match modes[i]:
+                    case 0:
+                        s = self.program[p] if not last else p
+                    case 1:
+                        assert not last
+                        s = p
+                    case 2:
+                        rel = p + self.relative_base
+                        s = self.program[rel] if not last else rel
+                ss.append(s)
+
+            return ss
+
         while True:
 
-            if self.MAX_ITERS and self.instruction_counter > self.MAX_ITERS:
-                self.exit_code = 2
-                return self.outputs_from_this_run
-
             pos = self.pos
-            opcode, modes = self.parse_opcode(self.program[pos])
+            opcode, modes = parse_opcode(self.read())
+            instruction = self.read(n=len(modes)+1)
+            params = instruction[1:]
 
-            num_params = INSTRUCTION_LENGTHS[opcode] - 1
-            program_slice = self.program[pos:pos+num_params+1]
-            params = program_slice[1:]
-
-            if self.DEBUG: print(f"[{self.instruction_counter}] New instruction to {INSTRUCTION_NAMES[opcode]} at pos={self.pos}:")
-            if self.DEBUG: print(f"    Program: {program_slice}")
-            if self.DEBUG: print(f"    Parsed opcode as {self.program[pos]} -> opcode={opcode}, modes={modes}")
-            if self.DEBUG: print(f"    Parameters: [ {self.interpret_params(params, modes, as_string=True)} ]")
+            if self.DEBUG: print(f"[{self.counter}] New instruction to {INSTRUCTION_NAMES[opcode]} at pos={self.pos}:")
+            if self.DEBUG: print(f"    Instruction: {instruction}")
+            if self.DEBUG: print(f"    Parsed opcode as {self.read()} -> opcode={opcode}, modes={modes}")
 
             increment_pos = True
 
             match opcode:
 
                 case 1: # ADD [3 params] [@]a + [@]b -> @c
-                    assert modes[2] != 1
-                    a,b,c = self.interpret_params(program_slice[1:], modes, last_as_address=True)
+                    a,b,c = interpret_params(True)
                     if self.DEBUG: print(f"    Writing: program[{c}] <- {a} + {b} = {a+b}")
-                    self.program[c] = a + b
+                    self.write(c, a+b)
                 
                 case 2: # MULTIPLY [3 params] [@]a * [@]b -> @c
-                    assert modes[2] != 1
-                    a,b,c = self.interpret_params(program_slice[1:], modes, last_as_address=True)
-                    self.program[c] = a * b
+                    a,b,c = interpret_params(True)
+                    self.write(c, a*b)
                     if self.DEBUG: print(f"    Writing: program[{c}] <- {a} * {b} = {a*b}")
                 
                 case 3: # INPUT [1 param] input -> @a
-                    assert modes[0] != 1
-                    a, = self.interpret_params(program_slice[1], modes, last_as_address=True)
+                    a, = interpret_params(True)
 
-                    if self.GET_USER_INPUT:
-                        print("Input: ", end="")
-                        _input = int(input())
-                    else:
-                        try:
-                            _input = self.inputs[self.input_index]
-                        except:
-                            if self.DEBUG: print("    Exiting: Awaiting input")
-                            # Exit with exit_code 1 (awaiting input)
-                            self.exit_code = 1
-                            return self.outputs_from_this_run
+                    try:
+                        self.write(a, self.get_input())
+                    except:
+                        if self.DEBUG: print("    Exiting: Awaiting input")
+                        return self.exit(1, oi)
 
-                    self.program[a] = _input
                     if self.DEBUG: print(f"    New input: program[{a}] <- {self.program[a]}")
-                    self.input_index += 1
 
                 case 4: # OUTPUT [1 param] [@]a -> output
-                    a, = self.interpret_params(program_slice[1], modes)
-                    self.outputs.append(a)
-                    self.outputs_from_this_run.append(a)
-                    if self.DEBUG:
-                        print(f"    New output: {a}{" (" + self.interpret_params(
-                                program_slice[1], modes, as_string=True
-                            ) + ")" if modes[0] == 0 else ""}")
+                    a, = interpret_params()
+                    self.output(a)
+                    if self.DEBUG: print(f"    New output: {a}")
 
                 case 5: # JUMP-IF-TRUE [2 params] if [@]a != 0 jump to [@]b
-                    a,b = self.interpret_params(program_slice[1:], modes)
+                    a,b = interpret_params()
                     if a != 0:
                         self.pos = b
                         increment_pos = False
@@ -199,7 +182,7 @@ class IntcodeComputer:
                         if self.DEBUG: print(f"    [Do nothing]")
 
                 case 6: # JUMP-IF-FALSE [2 params] if [@]a == 0 jump to [@]b
-                    a,b = self.interpret_params(program_slice[1:], modes)
+                    a,b = interpret_params()
                     if a == 0:
                         self.pos = b
                         increment_pos = False
@@ -208,34 +191,29 @@ class IntcodeComputer:
                         if self.DEBUG: print(f"    [Do nothing]")
 
                 case 7: # LESS THAN [3 params] if [@]a < [@]b then @c = 1 else @c = 0
-                    assert modes[2] != 1
-                    a,b,c = self.interpret_params(program_slice[1:], modes, last_as_address=True)
+                    a,b,c = interpret_params(True)
                     self.program[c] = int(a < b)
                     if self.DEBUG: print(f"    Writing: program[{c}] <- {int(a < b)}")
 
                 case 8: # EQUALS [3 params] if [@]a == [@]b then @c = 1 else @c = 0
-                    assert modes[2] != 1
-                    a,b,c = self.interpret_params(program_slice[1:], modes, last_as_address=True)
+                    a,b,c = interpret_params(True)
                     self.program[c] = int(a == b)
                     if self.DEBUG: print(f"    Writing: program[{c}] <- {int(a == b)}")
 
-                case 9: # ADJUST RELATIVE BASE [1 param] relative base += [@]a
-                    # TODO: for opcode 209, shouldn't last_as_address=True?
-                    #       i'd have to update something. it errors out right now for that.
-                    a, = self.interpret_params(program_slice[1], modes)
+                case 9: # ADJUST RELATIVE BASE [1 param] relative base += @a
+                    a, = interpret_params()
                     if self.DEBUG: print(f"    Updating relative base <- " + \
                         f"{self.relative_base} + {a} = {self.relative_base + a}")
                     self.relative_base += a
 
                 case 99:
                     if self.DEBUG: print(f"Program halted")
-                    self.exit_code = 0
-                    return self.outputs_from_this_run
+                    return self.exit(0, oi)
 
                 case _:
                     self.error(f"Unknown opcode")
 
-            self.instruction_counter += 1
+            self.counter += 1
             self.pos += increment_pos * INSTRUCTION_LENGTHS[opcode]
 
 
