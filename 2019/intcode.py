@@ -57,8 +57,17 @@ def parse_opcode(num):
     modes = [int(c) for c in s[:-2][::-1]]
     return opcode, modes
 
+def get_input(_input, counter):
+    if type(_input) == type(run):
+        return _input(counter)
+    elif type(_input) == int:
+        return _input
+    else:
+        return _input[counter]
+
 def run(_program, _input=None):
     program = _program.copy()
+    input_counter = 0
     pos = 0
     outputs = []
 
@@ -104,9 +113,11 @@ def run(_program, _input=None):
                 a = program[pos+1]
                 if _input == None:
                     print("Input: ", end="")
-                program[a] = _input if _input != None else int(input())
+                    _input = int(input())
+                program[a] = get_input(_input, input_counter)
                 if DEBUG: print(f"    New input: program[{a}] <- {program[a]}")
                 pos += INSTRUCTION_LENGTHS[opcode]
+                input_counter += 1
 
             case 4: # OUTPUT [1 param] [@]a -> output
                 a, = interpret_params(program[pos+1], modes, program)
