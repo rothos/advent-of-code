@@ -17,7 +17,6 @@ def do_part(text, part):
             for k in range(5):
                 computer = IntcodeComputer(program)
                 computer.run(inputs=[phase_signal[k], input_signal])
-                assert computer.exit_code == 0
                 input_signal = computer.outputs[-1]
 
             if best == None or input_signal > best:
@@ -28,33 +27,19 @@ def do_part(text, part):
     else:
 
         best = None
-        best_phase = None
-        best_k = None
-
         for phase_signal in permutations(range(5, 10)):
-
-            amplifiers = [IntcodeComputer(program) for _ in range(5)]
+            amplifiers = [IntcodeComputer(program, inputs=[phase_signal[i]]) for i in range(5)]
             input_signal = 0
-            k = 0
-
-            while True:
-                inputs = [input_signal] if k >= 5 else [phase_signal[k%5], input_signal]
-                amplifiers[k%5].run(inputs=inputs, name=f"amplifier{k}")
+            k = -1
+            while 1+(k := k + 1) and not all(amplifiers[i].exit_code == 0 for i in range(5)):
+                amplifiers[k%5].run(inputs=input_signal)
                 input_signal = amplifiers[k%5].outputs[-1]
-
-                if all(amplifiers[k].exit_code == 0 for k in range(5)):
-                    break
-
-                k += 1
 
             max_thruster_signal = amplifiers[-1].outputs[-1]
             if best == None or max_thruster_signal > best:
                 best = max_thruster_signal
-                best_phase = phase_signal
-                best_k = k
 
-        return f"{best} (phase = {"".join(str(n) for n in best_phase)}, {(k+1)//5} loops)"
-
+        return best
 
 def main():
     for part in [1, 2]:
