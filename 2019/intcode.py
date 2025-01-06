@@ -105,7 +105,7 @@ class IntcodeComputer:
                 num //= 10
             return opcode, modes
 
-        def interpret_params(last_as_address=False):
+        def get_params(last_as_address=False):
             nonlocal params, modes
             ss = []
             for i,p in enumerate(params):
@@ -117,11 +117,27 @@ class IntcodeComputer:
                         assert not last
                         s = p
                     case 2:
-                        rel = p + self.relative_base
-                        s = self.read(rel) if not last else rel
+                        addr = p + self.relative_base
+                        s = self.read(addr) if not last else addr
                 ss.append(s)
 
             return ss
+
+        def get_params_as_str():
+            nonlocal params, modes
+            ss = []
+            for i,p in enumerate(params):
+                match modes[i]:
+                    case 0:
+                        s = f"program[{p}]={self.read(p)}"
+                    case 1:
+                        s = str(p)
+                    case 2:
+                        rel = self.relative_base
+                        s = f"program[{p+rel}]={self.read(p+rel)}"
+                ss.append(s)
+
+            return ", ".join(ss)
 
         while True:
 
@@ -133,24 +149,25 @@ class IntcodeComputer:
             if self.DEBUG: print(f"[{self.counter}] New instruction to {INSTRUCTION_NAMES[opcode]} at pos={self.pos}:")
             if self.DEBUG: print(f"    Instruction: {instruction}")
             if self.DEBUG: print(f"    Parsed {self.read()} as opcode={opcode}, modes={modes}")
+            if self.DEBUG: print(f"    Parameters: [ {get_params_as_str()} ]")
 
             match opcode:
 
                 case 1:
                     # Add
-                    a,b,addr = interpret_params(True)
+                    a,b,addr = get_params(last_as_address=True)
                     if self.DEBUG: print(f"    Writing: program[{addr}] <- {a} + {b} = {a+b}")
                     self.write(addr, a+b)
                 
                 case 2:
                     # Multiply
-                    a,b,addr = interpret_params(True)
+                    a,b,addr = get_params(last_as_address=True)
                     self.write(addr, a*b)
                     if self.DEBUG: print(f"    Writing: program[{addr}] <- {a} * {b} = {a*b}")
                 
                 case 3:
                     # Input
-                    addr, = interpret_params(True)
+                    addr, = get_params(last_as_address=True)
                     try:
                         self.write(addr, self.input())
                     except:
@@ -161,23 +178,23 @@ class IntcodeComputer:
 
                 case 4:
                     # Output
-                    a, = interpret_params()
+                    a, = get_params()
                     self.output(a)
                     if self.DEBUG: print(f"    New output: {a}")
 
                 case 5:
                     # Jump-if-true
-                    a,addr = interpret_params()
+                    a,b = get_params()
                     if a != 0:
-                        self.pos = addr
+                        self.pos = b
                         increment_pos = False
-                        if self.DEBUG: print(f"    Jumping: setting pos={addr}")
+                        if self.DEBUG: print(f"    Jumping: setting pos={b}")
                     else:
                         if self.DEBUG: print(f"    [Do nothing]")
 
                 case 6:
                     # Jump-if-false
-                    a,b = interpret_params()
+                    a,b = get_params()
                     if a == 0:
                         self.pos = b
                         increment_pos = False
@@ -187,19 +204,19 @@ class IntcodeComputer:
 
                 case 7:
                     # Less than
-                    a,b,addr = interpret_params(True)
+                    a,b,addr = get_params(last_as_address=True)
                     self.write(addr, int(a < b))
                     if self.DEBUG: print(f"    Writing: program[{addr}] <- {int(a < b)}")
 
                 case 8:
                     # Equals
-                    a,b,addr = interpret_params(True)
+                    a,b,addr = get_params(last_as_address=True)
                     self.write(addr, int(a == b))
                     if self.DEBUG: print(f"    Writing: program[{addr}] <- {int(a == b)}")
 
                 case 9:
                     # Adjust relative base
-                    a, = interpret_params()
+                    a, = get_params()
                     if self.DEBUG: print(f"    Updating relative base <- " + \
                         f"{self.relative_base} + {a} = {self.relative_base + a}")
                     self.relative_base += a

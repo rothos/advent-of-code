@@ -12,7 +12,7 @@ def do_part(text, part):
     if part == 1:
         
         computer = IntcodeComputer(program)
-        computer.run(inputs=[1], DEBUG=1)
+        computer.run(inputs=[1])
         return computer.outputs[-1]
 
     else:
