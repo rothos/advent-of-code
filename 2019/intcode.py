@@ -41,7 +41,7 @@ class IntcodeComputer:
 
         self.pos = 0
         self.relative_base = 0
-        self.input_counter = 0
+        self.input_index = 0
         self.inputs = []
         self.outputs = []
         self.outputs_from_this_run = []
@@ -65,7 +65,7 @@ class IntcodeComputer:
 
             if key == "program" and type(setval) == list:
                 # Cast list programs to SliceableDicts
-                setval = SliceableDict(zip(range(len(setval)), setval))
+                setval = SliceableDict(enumerate(setval))
 
             if key == "inputs":
                 # Only extend the inputs list, don't replace it
@@ -184,7 +184,7 @@ class IntcodeComputer:
                         _input = int(input())
                     else:
                         try:
-                            _input = self.get_input(self.inputs, self.input_counter)
+                            _input = self.get_input(self.inputs, self.input_index)
                         except:
                             if self.DEBUG: print("    Exiting: Awaiting input")
                             # Exit with exit_code 1 (awaiting input)
@@ -192,7 +192,7 @@ class IntcodeComputer:
 
                     self.program[a] = _input
                     if self.DEBUG: print(f"    New input: program[{a}] <- {self.program[a]}")
-                    self.input_counter += 1
+                    self.input_index += 1
 
                 case 4: # OUTPUT [1 param] [@]a -> output
                     a, = self.interpret_params(program_slice[1], modes)
