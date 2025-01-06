@@ -27,7 +27,7 @@ INSTRUCTION_NAMES = {
 }
 
 class IntcodeComputer:
-    def __init__(self, settings={}, **kwargs):
+    def __init__(self, program=None, **kwargs):
         """
         Exit state settings:
             None: still running
@@ -36,9 +36,6 @@ class IntcodeComputer:
             1: exited due to awaiting input
             2: exited because reached MAX_ITERS
         """
-        if type(settings) == list:
-            settings = { "program": settings.copy() }
-
         self.pos = 0
         self.relative_base = 0
         self.input_index = 0
@@ -51,7 +48,7 @@ class IntcodeComputer:
         self.MAX_ITERS = 0
         self.exit_code = None
 
-        self.set_settings({**(settings or {}), **kwargs})
+        self.set_settings({"program": program, **kwargs})
 
     def set_settings(self, settings):
         if "inputs" in settings and type(settings["inputs"]) == int:
@@ -59,7 +56,7 @@ class IntcodeComputer:
 
         for key in settings.keys():
             if type(settings[key]) == list:
-                setval = settings[key].copy()
+                setval = settings[key][:]
             else:
                 setval = settings[key]
 
@@ -73,10 +70,6 @@ class IntcodeComputer:
             else:
                 # For all other attrs, set the value
                 setattr(self, key, setval)
-
-    def get_return_object(self, exit_code=0):
-        self.exit_code = exit_code
-        return self.outputs_from_this_run
 
     def interpret_params(self, params, modes, last_as_address=False, as_string=False):
         # Note: The program will break if BOTH last_as_address & as_string are set to True.
@@ -119,20 +112,14 @@ class IntcodeComputer:
         modes = [int(c) for c in s[:-2][::-1]]
         return opcode, modes
 
-    @staticmethod
-    def get_input(_input, counter):
-        if type(_input) == type(lambda x: x):
-            return _input(counter)
-        else:
-            return _input[counter]
-
     def error(self, msg):
         msg = f"ERROR: {msg} in {inspect.currentframe().f_back.f_code.co_name}"
         print(msg)
-        return self.get_return_object(exit_code=-1)
+        self.exit_code = -1
+        return self.outputs_from_this_run
 
-    def run(self, settings={}, **kwargs):
-        self.set_settings({**(settings or {}), **kwargs})
+    def run(self, **kwargs):
+        self.set_settings({**kwargs})
         self.exit_code = None
         self.outputs_from_this_run = []
 
@@ -142,27 +129,25 @@ class IntcodeComputer:
         while True:
 
             if self.MAX_ITERS and self.instruction_counter > self.MAX_ITERS:
-                return self.get_return_object(exit_code=2)
+                self.exit_code = 2
+                return self.outputs_from_this_run
 
             pos = self.pos
             opcode, modes = self.parse_opcode(self.program[pos])
-            
+
             num_params = INSTRUCTION_LENGTHS[opcode] - 1
             program_slice = self.program[pos:pos+num_params+1]
+            params = program_slice[1:]
 
             if self.DEBUG: print(f"[{self.instruction_counter}] New instruction to {INSTRUCTION_NAMES[opcode]} at pos={self.pos}:")
             if self.DEBUG: print(f"    Program: {program_slice}")
             if self.DEBUG: print(f"    Parsed opcode as {self.program[pos]} -> opcode={opcode}, modes={modes}")
-            if self.DEBUG: print(f"    Parameters: [ {self.interpret_params(program_slice[1:], modes, as_string=True)} ]")
+            if self.DEBUG: print(f"    Parameters: [ {self.interpret_params(params, modes, as_string=True)} ]")
 
             increment_pos = True
 
             match opcode:
 
-                case 99:
-                    if self.DEBUG: print(f"Program halted")
-                    return self.get_return_object(exit_code=0)
-                
                 case 1: # ADD [3 params] [@]a + [@]b -> @c
                     assert modes[2] != 1
                     a,b,c = self.interpret_params(program_slice[1:], modes, last_as_address=True)
@@ -184,11 +169,12 @@ class IntcodeComputer:
                         _input = int(input())
                     else:
                         try:
-                            _input = self.get_input(self.inputs, self.input_index)
+                            _input = self.inputs[self.input_index]
                         except:
                             if self.DEBUG: print("    Exiting: Awaiting input")
                             # Exit with exit_code 1 (awaiting input)
-                            return self.get_return_object(exit_code=1)
+                            self.exit_code = 1
+                            return self.outputs_from_this_run
 
                     self.program[a] = _input
                     if self.DEBUG: print(f"    New input: program[{a}] <- {self.program[a]}")
@@ -224,14 +210,14 @@ class IntcodeComputer:
                 case 7: # LESS THAN [3 params] if [@]a < [@]b then @c = 1 else @c = 0
                     assert modes[2] != 1
                     a,b,c = self.interpret_params(program_slice[1:], modes, last_as_address=True)
-                    self.program[c] = 1 if a < b else 0
-                    if self.DEBUG: print(f"    Writing: program[{c}] <- {1 if a < b else 0}")
+                    self.program[c] = int(a < b)
+                    if self.DEBUG: print(f"    Writing: program[{c}] <- {int(a < b)}")
 
                 case 8: # EQUALS [3 params] if [@]a == [@]b then @c = 1 else @c = 0
                     assert modes[2] != 1
                     a,b,c = self.interpret_params(program_slice[1:], modes, last_as_address=True)
-                    self.program[c] = 1 if a == b else 0
-                    if self.DEBUG: print(f"    Writing: program[{c}] <- {1 if a == b else 0}")
+                    self.program[c] = int(a == b)
+                    if self.DEBUG: print(f"    Writing: program[{c}] <- {int(a == b)}")
 
                 case 9: # ADJUST RELATIVE BASE [1 param] relative base += [@]a
                     # TODO: for opcode 209, shouldn't last_as_address=True?
@@ -240,6 +226,11 @@ class IntcodeComputer:
                     if self.DEBUG: print(f"    Updating relative base <- " + \
                         f"{self.relative_base} + {a} = {self.relative_base + a}")
                     self.relative_base += a
+
+                case 99:
+                    if self.DEBUG: print(f"Program halted")
+                    self.exit_code = 0
+                    return self.outputs_from_this_run
 
                 case _:
                     self.error(f"Unknown opcode")

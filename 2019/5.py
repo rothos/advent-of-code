@@ -1,8 +1,8 @@
 import time
 from intcode import IntcodeComputer
 
-text = open("5.txt", 'r').read(); TEST = False
-# text = open("5test.txt", 'r').read(); TEST = True
+text = open("5.txt", 'r').read(); TEST = 0
+# text = open("5test.txt", 'r').read(); TEST = 1
 
 def do_part(text, part):
 
@@ -17,7 +17,7 @@ def do_part(text, part):
 
     else:
 
-        computer.run(inputs=5, GET_USER_INPUT=1 if TEST else 0)
+        computer.run(inputs=5, GET_USER_INPUT=TEST)
         return computer.outputs[-1]
 
 
