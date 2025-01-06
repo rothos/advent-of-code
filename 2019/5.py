@@ -1,5 +1,5 @@
 import time
-from intcode import run
+from intcode import IntcodeComputer
 
 text = open("5.txt", 'r').read(); TEST = False
 # text = open("5test.txt", 'r').read(); TEST = True
@@ -7,17 +7,18 @@ text = open("5.txt", 'r').read(); TEST = False
 def do_part(text, part):
 
     program = list(map(int, text.split(",")))
+    computer = IntcodeComputer(program)
 
     if part == 1:
         
-        program, outputs = run(program, _input=1)
-        return outputs[-1]
+        computer = IntcodeComputer(program)
+        state = computer.run(inputs=1)
+        return state["outputs"][-1]
 
     else:
 
-        _input = None if TEST else 5
-        program, outputs = run(program, _input=_input)
-        return outputs[-1]
+        state = computer.run(inputs=5, GET_USER_INPUT=1 if TEST else 0)
+        return state["outputs"][-1]
 
 
 def main():

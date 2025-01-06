@@ -1,24 +1,27 @@
 import time
-from intcode import run
-import itertools
+from intcode import IntcodeComputer
+from itertools import permutations
 
-text = open("7.txt", 'r').read(); TEST = False
-# text = open("7test.txt", 'r').read(); TEST = True
+text = open("7.txt", 'r').read()
+# text = open("7test.txt", 'r').read()
 
 def do_part(text, part):
 
     program = list(map(int, text.split(",")))
 
     if part == 1:
-        
+
         best = None
-        for perm in itertools.permutations(range(5)):
+
+        for phase_signal in permutations(range(5)):
+            
             input_signal = 0
+
             for k in range(5):
-                # First input: Phase signal
-                # Second input: Input signal
-                program, outputs = run(program, _input=[perm[k], input_signal])
-                input_signal = outputs[-1]
+                computer = IntcodeComputer(program)
+                state = computer.run(inputs=[phase_signal[k], input_signal])
+                assert state["exit_code"] == 0
+                input_signal = state["outputs"][-1]
 
             if best == None or input_signal > best:
                 best = input_signal
@@ -26,7 +29,40 @@ def do_part(text, part):
         return best
 
     else:
-        pass
+
+        best = None
+        best_phase = None
+        best_k = None
+
+        for phase_signal in permutations(range(5,10)):
+
+            amplifiers = [IntcodeComputer(program) for _ in range(5)]
+            input_signal = 0
+            k = 0
+            halt = False
+
+            while True:
+                inputs = [input_signal] if k >= 5 else [phase_signal[k%5], input_signal]
+                # print(f"Running amplifier #{k%5} with inputs {inputs}...", end="")
+                state = amplifiers[k%5].run(inputs=inputs, name=f"amplifier{k}")
+                input_signal = state["outputs"][-1]
+                # print(f" got outputs {state["outputs"]}")
+
+                if state["exit_code"] == 0:
+                    halt = True
+
+                if halt and k % 5 == 4:
+                    break
+
+                k += 1
+
+            max_thruster_signal = amplifiers[-1].outputs[-1]
+            if best == None or max_thruster_signal > best:
+                best = max_thruster_signal
+                best_phase = phase_signal
+                best_k = k
+
+        return f"{best} (phase = {"".join(str(n) for n in best_phase)}, {(k+1)//5} loops)"
 
 
 def main():

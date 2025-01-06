@@ -1,5 +1,5 @@
 import time
-from intcode import run
+from intcode import IntcodeComputer
 
 text = open("2.txt", 'r').read()
 # text = open("2test.txt", 'r').read()
@@ -7,12 +7,13 @@ text = open("2.txt", 'r').read()
 def do_part(text, part):
 
     program = list(map(int, text.split(",")))
+    computer = IntcodeComputer()
 
     if part == 1:
         program[1] = 12
         program[2] = 2
-        program, _ = run(program)
-        return program[0]
+        state = computer.run(program=program)
+        return state["program"][0]
 
     else:
         target = 19690720
@@ -20,8 +21,8 @@ def do_part(text, part):
             for verb in range(100):
                 program[1] = noun
                 program[2] = verb
-                result, _ = run(program)
-                if result[0] == target:
+                state = computer.run(program=program, pos=0)
+                if state["program"][0] == target:
                     return 100*noun + verb
 
 
