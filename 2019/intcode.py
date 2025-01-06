@@ -76,7 +76,7 @@ class IntcodeComputer:
         else:
             return [self.program[k] for k in range(i,i+n)]
 
-    def get_input(self):
+    def input(self):
         result = self.inputs[self.input_index]
         self.input_index += 1
         return result
@@ -152,7 +152,7 @@ class IntcodeComputer:
                     # Input
                     addr, = interpret_params(True)
                     try:
-                        self.write(addr, self.get_input())
+                        self.write(addr, self.input())
                     except:
                         if self.DEBUG: print("    Exiting: Awaiting input")
                         return self.exit(1, oi)
