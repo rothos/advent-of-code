@@ -43,6 +43,7 @@ class IntcodeComputer:
         self.instruction_counter = 0
         self.DEBUG = 0
         self.GET_USER_INPUT = 0
+        self.exit_code = None
         self.set_settings({**(settings or {}), **kwargs})
 
     def set_settings(self, settings):
@@ -61,6 +62,7 @@ class IntcodeComputer:
                 setattr(self, key, setval)
 
     def get_return_object(self, exit_code=0, error_msg=""):
+        self.exit_code = exit_code
         return {
             "program": self.program,
             "inputs": self.inputs,
@@ -122,6 +124,7 @@ class IntcodeComputer:
         return self.get_return_object(exit_code=-1, error_msg=msg)
 
     def run(self, settings={}, **kwargs):
+        self.exit_code = None
         self.set_settings({**(settings or {}), **kwargs})
         self.exit_code = None
 

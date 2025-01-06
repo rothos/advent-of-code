@@ -36,17 +36,13 @@ def do_part(text, part):
             amplifiers = [IntcodeComputer(program) for _ in range(5)]
             input_signal = 0
             k = 0
-            halt = False
 
             while True:
                 inputs = [input_signal] if k >= 5 else [phase_signal[k%5], input_signal]
                 state = amplifiers[k%5].run(inputs=inputs, name=f"amplifier{k}")
                 input_signal = state["outputs"][-1]
 
-                if state["exit_code"] == 0:
-                    halt = True
-
-                if halt and k % 5 == 4:
+                if all(amplifiers[k].exit_code == 0 for k in range(5)):
                     break
 
                 k += 1
