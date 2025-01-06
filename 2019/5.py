@@ -12,12 +12,12 @@ def do_part(text, part):
     if part == 1:
         
         computer = IntcodeComputer(program)
-        computer.run(inputs=1)
+        computer.run(inputs=[1], DEBUG=1)
         return computer.outputs[-1]
 
     else:
 
-        computer.run(inputs=5, GET_USER_INPUT=TEST)
+        computer.run(inputs=[5], GET_USER_INPUT=TEST)
         return computer.outputs[-1]
 
 

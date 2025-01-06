@@ -37,7 +37,7 @@ def do_part(text, part):
         panels[location] = 1
 
     while computer.exit_code != 0:
-        color, reverse = computer.run(inputs=panels[location])
+        color, reverse = computer.run(inputs=[panels[location]])
         panels[location] = color
         direction = rotate(direction, reverse=reverse)
         location = add(location, direction)

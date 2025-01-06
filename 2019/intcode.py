@@ -1,4 +1,5 @@
 import inspect
+from collections import defaultdict
 
 INSTRUCTION_LENGTHS = {
     1: 4,
@@ -31,7 +32,6 @@ class IntcodeComputer:
         """
         Exit state settings:
             None: still running
-           -1: error
             0: exited with halt code 99
             1: exited due to awaiting input
         """
@@ -43,13 +43,9 @@ class IntcodeComputer:
         self.counter = 0
         self.DEBUG = 0
         self.exit_code = None
-
         self.set_settings({"program": program, **kwargs})
 
     def set_settings(self, settings):
-        if "inputs" in settings and type(settings["inputs"]) == int:
-            settings["inputs"] = [settings["inputs"]]
-
         for key in settings.keys():
             if type(settings[key]) == list:
                 setval = settings[key][:]
@@ -57,8 +53,10 @@ class IntcodeComputer:
                 setval = settings[key]
 
             if key == "program" and type(setval) == list:
-                # Cast list programs to SliceableDicts
-                setval = SliceableDict(enumerate(setval))
+                # Cast list program to dict
+                temp = defaultdict(int)
+                temp.update(dict(enumerate(setval)))
+                setval = temp
 
             if key == "inputs":
                 # Only extend the inputs list, don't replace it
@@ -66,11 +64,6 @@ class IntcodeComputer:
             else:
                 # For all other attrs, set the value
                 setattr(self, key, setval)
-
-    def error(self, msg):
-        msg = f"ERROR: {msg} in {inspect.currentframe().f_back.f_code.co_name}"
-        print(msg)
-        return self.exit(-1)
 
     def write(self, i, val):
         self.program[i] = val
@@ -81,7 +74,7 @@ class IntcodeComputer:
         if n == None:
             return self.program[i]
         else:
-            return self.program[i:i+n]
+            return [self.program[k] for k in range(i,i+n)]
 
     def get_input(self):
         result = self.inputs[self.input_index]
@@ -100,7 +93,6 @@ class IntcodeComputer:
         self.exit_code = None
         oi = len(self.outputs)
 
-        if not self.program: self.error("No program provided")
         if self.DEBUG: print(f"Running program (length {len(self.program)})")
 
         def parse_opcode(num):
@@ -120,68 +112,71 @@ class IntcodeComputer:
                 last = last_as_address and (i == len(params) - 1)
                 match modes[i]:
                     case 0:
-                        s = self.program[p] if not last else p
+                        s = self.read(p) if not last else p
                     case 1:
                         assert not last
                         s = p
                     case 2:
                         rel = p + self.relative_base
-                        s = self.program[rel] if not last else rel
+                        s = self.read(rel) if not last else rel
                 ss.append(s)
 
             return ss
 
         while True:
 
-            pos = self.pos
             opcode, modes = parse_opcode(self.read())
             instruction = self.read(n=len(modes)+1)
             params = instruction[1:]
+            increment_pos = True
 
             if self.DEBUG: print(f"[{self.counter}] New instruction to {INSTRUCTION_NAMES[opcode]} at pos={self.pos}:")
             if self.DEBUG: print(f"    Instruction: {instruction}")
-            if self.DEBUG: print(f"    Parsed opcode as {self.read()} -> opcode={opcode}, modes={modes}")
-
-            increment_pos = True
+            if self.DEBUG: print(f"    Parsed {self.read()} as opcode={opcode}, modes={modes}")
 
             match opcode:
 
-                case 1: # ADD [3 params] [@]a + [@]b -> @c
-                    a,b,c = interpret_params(True)
-                    if self.DEBUG: print(f"    Writing: program[{c}] <- {a} + {b} = {a+b}")
-                    self.write(c, a+b)
+                case 1:
+                    # Add
+                    a,b,addr = interpret_params(True)
+                    if self.DEBUG: print(f"    Writing: program[{addr}] <- {a} + {b} = {a+b}")
+                    self.write(addr, a+b)
                 
-                case 2: # MULTIPLY [3 params] [@]a * [@]b -> @c
-                    a,b,c = interpret_params(True)
-                    self.write(c, a*b)
-                    if self.DEBUG: print(f"    Writing: program[{c}] <- {a} * {b} = {a*b}")
+                case 2:
+                    # Multiply
+                    a,b,addr = interpret_params(True)
+                    self.write(addr, a*b)
+                    if self.DEBUG: print(f"    Writing: program[{addr}] <- {a} * {b} = {a*b}")
                 
-                case 3: # INPUT [1 param] input -> @a
-                    a, = interpret_params(True)
-
+                case 3:
+                    # Input
+                    addr, = interpret_params(True)
                     try:
-                        self.write(a, self.get_input())
+                        self.write(addr, self.get_input())
                     except:
                         if self.DEBUG: print("    Exiting: Awaiting input")
                         return self.exit(1, oi)
 
-                    if self.DEBUG: print(f"    New input: program[{a}] <- {self.program[a]}")
+                    if self.DEBUG: print(f"    New input: program[{addr}] <- {self.read(addr)}")
 
-                case 4: # OUTPUT [1 param] [@]a -> output
+                case 4:
+                    # Output
                     a, = interpret_params()
                     self.output(a)
                     if self.DEBUG: print(f"    New output: {a}")
 
-                case 5: # JUMP-IF-TRUE [2 params] if [@]a != 0 jump to [@]b
-                    a,b = interpret_params()
+                case 5:
+                    # Jump-if-true
+                    a,addr = interpret_params()
                     if a != 0:
-                        self.pos = b
+                        self.pos = addr
                         increment_pos = False
-                        if self.DEBUG: print(f"    Jumping: setting pos={b}")
+                        if self.DEBUG: print(f"    Jumping: setting pos={addr}")
                     else:
                         if self.DEBUG: print(f"    [Do nothing]")
 
-                case 6: # JUMP-IF-FALSE [2 params] if [@]a == 0 jump to [@]b
+                case 6:
+                    # Jump-if-false
                     a,b = interpret_params()
                     if a == 0:
                         self.pos = b
@@ -190,17 +185,20 @@ class IntcodeComputer:
                     else:
                         if self.DEBUG: print(f"    [Do nothing]")
 
-                case 7: # LESS THAN [3 params] if [@]a < [@]b then @c = 1 else @c = 0
-                    a,b,c = interpret_params(True)
-                    self.program[c] = int(a < b)
-                    if self.DEBUG: print(f"    Writing: program[{c}] <- {int(a < b)}")
+                case 7:
+                    # Less than
+                    a,b,addr = interpret_params(True)
+                    self.write(addr, int(a < b))
+                    if self.DEBUG: print(f"    Writing: program[{addr}] <- {int(a < b)}")
 
-                case 8: # EQUALS [3 params] if [@]a == [@]b then @c = 1 else @c = 0
-                    a,b,c = interpret_params(True)
-                    self.program[c] = int(a == b)
-                    if self.DEBUG: print(f"    Writing: program[{c}] <- {int(a == b)}")
+                case 8:
+                    # Equals
+                    a,b,addr = interpret_params(True)
+                    self.write(addr, int(a == b))
+                    if self.DEBUG: print(f"    Writing: program[{addr}] <- {int(a == b)}")
 
-                case 9: # ADJUST RELATIVE BASE [1 param] relative base += @a
+                case 9:
+                    # Adjust relative base
                     a, = interpret_params()
                     if self.DEBUG: print(f"    Updating relative base <- " + \
                         f"{self.relative_base} + {a} = {self.relative_base + a}")
@@ -211,25 +209,7 @@ class IntcodeComputer:
                     return self.exit(0, oi)
 
                 case _:
-                    self.error(f"Unknown opcode")
+                    raise Exception("Unknown opcode")
 
             self.counter += 1
             self.pos += increment_pos * INSTRUCTION_LENGTHS[opcode]
-
-
-class SliceableDict(dict):
-    def __getitem__(self, key):
-        if isinstance(key, slice):
-            # Determine the full range of indices from the slice
-            start = key.start if key.start is not None else 0
-            stop = key.stop if key.stop is not None else max(self.keys(), default=0) + 1
-            step = key.step if key.step is not None else 1
-            
-            # Generate the range of keys based on the slice
-            indices = range(start, stop, step)
-            
-            # Fetch values, defaulting to 0 if the key is missing
-            return [self.get(i, 0) for i in indices]
-        
-        # For single key access, return 0 if the key doesn't exist
-        return self.get(key, 0)

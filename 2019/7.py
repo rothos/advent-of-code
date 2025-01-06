@@ -32,7 +32,7 @@ def do_part(text, part):
             input_signal = 0
             k = -1
             while 1+(k := k + 1) and not all(amplifiers[i].exit_code == 0 for i in range(5)):
-                amplifiers[k%5].run(inputs=input_signal)
+                amplifiers[k%5].run(inputs=[input_signal])
                 input_signal = amplifiers[k%5].outputs[-1]
 
             max_thruster_signal = amplifiers[-1].outputs[-1]
