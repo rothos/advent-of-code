@@ -6,6 +6,7 @@ text = open("7.txt", 'r').read()
 # text = open("7test.txt", 'r').read()
 
 def do_part(text, part):
+
     program = list(map(int, text.split(",")))
 
     if part == 1:
