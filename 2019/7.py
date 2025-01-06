@@ -6,17 +6,13 @@ text = open("7.txt", 'r').read()
 # text = open("7test.txt", 'r').read()
 
 def do_part(text, part):
-
     program = list(map(int, text.split(",")))
 
     if part == 1:
 
         best = None
-
         for phase_signal in permutations(range(5)):
-            
             input_signal = 0
-
             for k in range(5):
                 computer = IntcodeComputer(program)
                 state = computer.run(inputs=[phase_signal[k], input_signal])
@@ -34,7 +30,7 @@ def do_part(text, part):
         best_phase = None
         best_k = None
 
-        for phase_signal in permutations(range(5,10)):
+        for phase_signal in permutations(range(5, 10)):
 
             amplifiers = [IntcodeComputer(program) for _ in range(5)]
             input_signal = 0
@@ -43,10 +39,8 @@ def do_part(text, part):
 
             while True:
                 inputs = [input_signal] if k >= 5 else [phase_signal[k%5], input_signal]
-                # print(f"Running amplifier #{k%5} with inputs {inputs}...", end="")
                 state = amplifiers[k%5].run(inputs=inputs, name=f"amplifier{k}")
                 input_signal = state["outputs"][-1]
-                # print(f" got outputs {state["outputs"]}")
 
                 if state["exit_code"] == 0:
                     halt = True
