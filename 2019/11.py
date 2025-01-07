@@ -27,7 +27,6 @@ def print_panels(panels):
 def do_part(text, part):
 
     program = list(map(int, text.split(",")))
-
     computer = IntcodeComputer(program)
     panels = defaultdict(int)
     location = (0, 0)

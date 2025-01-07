@@ -1,25 +1,15 @@
 import time
 from intcode import IntcodeComputer
 
-text = open("9.txt", 'r').read(); TEST = False
-# text = open("9test.txt", 'r').read(); TEST = True
+text = open("9.txt", 'r').read()
+# text = open("9test.txt", 'r').read()
 
 def do_part(text, part):
-
     program = list(map(int, text.split(",")))
     computer = IntcodeComputer(program)
-
-    if part == 1:
-        
-        computer.run(inputs=[1])
-        assert len(computer.outputs) == 1
-        return computer.outputs[0]
-
-    else:
-
-        computer.run(inputs=[2])
-        assert len(computer.outputs) == 1
-        return computer.outputs[0]
+    computer.run(inputs=[part])
+    assert len(computer.outputs) == 1
+    return computer.outputs[0]
 
 def main():
     for part in [1, 2]:

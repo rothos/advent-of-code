@@ -21,12 +21,15 @@ files_to_open=()
 if [ ! -f "$python_file" ]; then
     cat << EOF > "$python_file"
 import time
+from intcode import IntcodeComputer
 
-text = open("${day}.txt", 'r').read(); TEST = False
-text = open("${day}test.txt", 'r').read(); TEST = True
+text = open("${day}.txt", 'r').read()
+text = open("${day}test.txt", 'r').read()
 
 def do_part(text, part):
 
+    program = list(map(int, text.split(",")))
+    computer = IntcodeComputer(program)
     
 
     if part == 1:
