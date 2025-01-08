@@ -30,15 +30,7 @@ def print_and_wait(tiles):
 def chunk_into_triplets(lst):
     return list(zip(*[iter(lst)]*3))
 
-def add(x, y):
-    return [x[0]+y[0], x[1]+y[1]]
-
-def subtract(x, y):
-    return [x[0]-y[0], x[1]-y[1]]
-
 def do_part(text, part):
-
-    tiles = {}
 
     def update_tiles(outputs):
         nonlocal tiles
@@ -65,6 +57,7 @@ def do_part(text, part):
             return 0
 
     program = list(map(int, text.split(",")))
+    tiles = {}
 
     if part == 1:
         computer = IntcodeComputer(program)
