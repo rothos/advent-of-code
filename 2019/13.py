@@ -39,7 +39,6 @@ def subtract(x, y):
 def do_part(text, part):
 
     tiles = {}
-    lastball = None
 
     def update_tiles(outputs):
         nonlocal tiles
@@ -56,33 +55,13 @@ def do_part(text, part):
 
         else:
             # Bot play
-            nonlocal tiles, lastball
+            nonlocal tiles
 
-            def get_paddle(): return [key for key in tiles.keys() if tiles[key] == 3][0]
-            def get_ball():   return [key for key in tiles.keys() if tiles[key] == 4][0]
-            def is_empty(xy): return tiles[xy] == 0
-            def is_wall(xy):  return tiles[xy] == 1
-            def is_block(xy): return tiles[xy] == 2
+            ball = [key for key in tiles.keys() if tiles[key] == 4][0]
+            paddle = [key for key in tiles.keys() if tiles[key] == 3][0]
 
-            ball = get_ball()
-            paddle = get_paddle()
-
-            # On the first frame, do nothing
-            if not lastball:
-                lastball = ball
-                return 0
-
-            # If ball is directly above paddle, do nothing
-            if ball[0] == paddle[0] and (ball[1] + 1) == paddle[1]:
-                lastball = ball
-                return 0
-
-            # Else, follow the ball
-            balldir = subtract(ball, lastball)
-            nextball = add(ball, balldir)
-            lastball = ball
-            if paddle[0] < nextball[0]: return 1
-            if paddle[0] > nextball[0]: return -1
+            if paddle[0] < ball[0]: return 1
+            if paddle[0] > ball[0]: return -1
             return 0
 
     program = list(map(int, text.split(",")))
